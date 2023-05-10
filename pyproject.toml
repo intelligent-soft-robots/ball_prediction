@@ -1,0 +1,17 @@
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ball_prediction"
+version = "0.0.1"
+dependencies = [
+    "requests",
+    'importlib-metadata; python_version<"3.8"',
+]
+
+[project.scripts]
+my-script = "ball_prediction.module:function"
