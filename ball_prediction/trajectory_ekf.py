@@ -20,13 +20,13 @@ class BallTrajectoryEKF(ExtendedKalmanFilter):
         else:
             self.ball_model = ball_model
 
-        self.FJacobian = self.ball_model.compute_jacobian()
+        self.FJacobian = self.ball_model.compute_jacobian
 
         # Uncertainty matrices for EKF update
-        self.Q = diag(config.ekf_param.Q)
-        self.R = diag(config.ekf_param.R)
+        self.Q = diag(config["ekf_param"]["Q"])
+        self.R = diag(config["ekf_param"]["R"])
 
-        self.P_init = diag(config.ekf_param.P_init_diag)
+        self.P_init = diag(config["ekf_param"]["P_init_diag"])
 
     def initialize_kalman(
         self, q_init: Sequence[float], P_init: Optional[ndarray] = None
@@ -68,11 +68,7 @@ class BallTrajectoryEKF(ExtendedKalmanFilter):
 
         return q_pred, q_est, P_pred, P_est
 
-    def measurement_model():
-
-        return True
-
-    def HJacobian():
+    def HJacobian(self, q):
         HJacobian = array(
             [
                 [1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -86,8 +82,7 @@ class BallTrajectoryEKF(ExtendedKalmanFilter):
 
         return HJacobian
 
-    def hq(q: Sequence[float]):
+    def hq(self, q: Sequence[float]):
         q = array(q)
-        z = q[0:6]
 
-        return z
+        return q[0:6]

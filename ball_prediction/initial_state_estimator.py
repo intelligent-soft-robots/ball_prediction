@@ -4,64 +4,103 @@ from numpy import array, gradient, hstack
 from numpy.polynomial.polynomial import Polynomial
 
 
-def finite_differences_estimator(t_buffer: Sequence[float], z_buffer: Sequence[float]):
-    time_stamps = array(t_buffer)
-    positions = array(z_buffer)
-
-    velocities = []
-
-    for axs in range(3):
-        velocity = gradient(positions[:, axs], time_stamps)
-        velocities.append(velocity)
-
-    velocities = array(velocities)
-    print(positions)
-    print(velocities)
-    q_init = hstack((positions[-1], velocities))
-
-    return array(q_init)
+class InitialStateEstimator:
+    def load_estimator(config: dict):
+        estimator_name = config["estimation_method"]
+        estimators = {
+            "direct": DirectMeasurement,
+            "finite": FiniteDifferencesEstimator,
+            "regression": RegressionEstimator,
+        }
+        if estimator_name in estimators:
+            return estimators[estimator_name]()
+        else:
+            raise ValueError(f"Invalid class name: {estimator_name}")
 
 
-def regression_estimator(t_buffer: Sequence[float], z_buffer: Sequence[float], config):
-    time_stamps = array(t_buffer)
-    positions = array(z_buffer)
+class DirectMeasurement:
+    def estimate(self, time_stamps: Sequence[float], measurements: Sequence[float]):
+        measurements = array(measurements)
 
-    degree = config.initial_state_estimation.regression_degree
+        return measurements[-1]
 
-    q_init = []
-
-    positions = []
-    velocities = []
-
-    for axis in range(3):
-        position_polynomial = Polynomial.fit(
-            time_stamps[:-1], positions[:-1, axis], deg=degree
-        )
-
-        velocity_polynomial = position_polynomial.deriv()
-
-        positions.append(position_polynomial(time_stamps[-1]))
-        velocities.append(velocity_polynomial(time_stamps[-1]))
-
-    spin = [0.0, 0.0, 0.0]
-
-    q_init.extend(positions)
-    q_init.extend(velocities)
-    q_init.extend(spin)
-
-    return array(q_init)
+    def estimate_extended_state_space(
+        self, time_stamps: Sequence[float], measurements: Sequence[float]
+    ):
+        estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
+        print(estimate)
+        return hstack((estimate, [0, 0, 0]))
 
 
-def external_measurement(t_buffer: Sequence[float], z_buffer: Sequence[float]):
-    return array(z_buffer[-1])
+class FiniteDifferencesEstimator:
+    def estimate(self, time_stamps: Sequence[float], measurements: Sequence[float]):
+        measurements = array(measurements)
+
+        if measurements.size <= 1:
+            raise ValueError(
+                f"Number of measurements ({len(measurements)}) not sufficient"
+            )
+
+        velocities = []
+        for axis in range(3):
+            velocity = gradient(measurements[:, axis], time_stamps)
+            velocities.append(velocity)
+
+        velocities = array(velocities)
+
+        return hstack((measurements[-1], velocities[-1]))
+
+    def estimate_extended_state_space(
+        self, time_stamps: Sequence[float], measurements: Sequence[float]
+    ):
+        estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
+        return hstack((estimate, [0, 0, 0]))
 
 
-def external_measurement_wo_spin(t_buffer: Sequence[float], z_buffer: Sequence[float]):
-    q_init = []
-    q_init.extend(z_buffer[-1])
-    q_init.extend([0.0, 0.0, 0.0])
+class RegressionEstimator:
+    def __init__(self) -> None:
+        self.regression_degree = 3
 
-    return array(q_init)
+    def load_config(self, config: dict) -> None:
+        self.regression_degree = config["initial_state_estimation"]["regression_degree"]
 
-def launcher(launch_parameter, t_buffer, z_buffer):
-    pass
+    def estimate(self, time_stamps: Sequence[float], measurements: Sequence[float]):
+        time_stamps = array(time_stamps)
+        measurements = array(measurements)
+
+        position = []
+        velocity = []
+
+        for axis in range(3):
+            position_polynomial = Polynomial.fit(
+                time_stamps[:-1], measurements[:-1, axis], deg=self.regression_degree
+            )
+
+            velocity_polynomial = position_polynomial.deriv()
+
+            position.append(position_polynomial(time_stamps[-1]))
+            velocity.append(velocity_polynomial(time_stamps[-1]))
+
+        return hstack((position, velocity))
+
+    def estimate_extended_state_space(
+        self, time_stamps: Sequence[float], measurements: Sequence[float]
+    ):
+        estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
+        return hstack((estimate, [0, 0, 0]))
+
+
+class BallLauncherModelState:
+    def __init__(self) -> None:
+        pass
+
+    def load_config(self, config: dict) -> None:
+        pass
+
+    def estimate(
+        self,
+        time_stamps: Sequence[float],
+        measurements: Sequence[float],
+        launch_parameters: Sequence[float],
+    ):
+        pass

@@ -1,16 +1,19 @@
+estimation_method = "regression" # direct, finite, regression
+filter_method = "plane" # plane, box, omni, fixed-step
+
 [setting]
-t_prediction_horizon = 1.00 # [s]
-prediction_filter = "plane" # plane, box, omni
-f_predictor = 2000
+t_prediction_horizon = 2.00 # [s]
+f_predictor = 1000
 reset_height = 0.76
 init_buffer_size = 10
 f_downsample = 200
 downsample = true
 filter_order = 2
+dynamic_R = false
 
 [virtual_plane]
-axis = 0 # 0 - x-axis, 1 - y-axis
-offset = 3.0 # [m]
+axis = 1 # 0 - x-axis, 1 - y-axis
+offset = -2.3 # [m]
 spline_deg = 3
 
 [virtual_box]
@@ -22,9 +25,9 @@ height = 1.0 # z-axis
 [ekf_param]
 Q = [0.001, 0.001, 0.001, 0.1, 0.1, 0.1, 1.0, 1.0, 1.0]
 R = [0.4, 0.4, 0.4, 4.2, 4.2, 4.2]
-P_init_diag = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+P_init_diag = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 q_init = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+
 [initial_state_estimation]
-estimation_method = "regression" # finite, regression
 regressor_degree = 3

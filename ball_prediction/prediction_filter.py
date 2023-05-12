@@ -6,22 +6,26 @@ from scipy.signal import decimate
 
 
 class PredictionFilter:
-    def __init__(self, filter_name: str) -> None:
-        self.loaded_filter = self.load_filter[filter_name]
+    def load_filter(config: dict):
+        filter_name = config["filter_method"]
+        filters = {"omni": OmniSpace, "plane": VirtualPlane, "box": VirtualBox}
 
-    def load_filter(self, filter_name):
-        classes = {"omni": OmniSpace, "plane": VirtualPlane, "box": VirtualBox}
-        if filter_name in classes:
-            return classes[filter_name]
+        if filter_name in filters:
+            return filters[filter_name](config)
         else:
-            raise ValueError(f"Invalid class name: {filter_name}")
+            raise ValueError(f"Invalid filter name: {filter_name}")
+
+
+class NoFilter:
+    def __init__(self, config) -> None:
+        self.config = config
 
 
 class VirtualPlane:
-    def __init__(self, pred_config) -> None:
-        self.axis = pred_config.virtual_plane.axis
-        self.offset = pred_config.virtual_plane.offset
-        self.spline_deg = pred_config.virtual_plane.spline_deg
+    def __init__(self, config) -> None:
+        self.axis = config["virtual_plane"]["axis"]
+        self.offset = config["virtual_plane"]["offset"]
+        self.spline_deg = config["virtual_plane"]["spline_deg"]
 
     def filter(self, t_pred, q_t_pred):
         q_t_pred = array(q_t_pred)
@@ -54,23 +58,25 @@ class VirtualPlane:
 
 
 class VirtualBox:
-    def __init__(self, pred_config) -> None:
-        center = pred_config.virtual_box.center
+    def __init__(self, config) -> None:
+        center = config["virtual_box"]["center"]
 
-        depth = pred_config.virtual_box.depth  # x-axis
-        width = pred_config.virtual_box.width  # y-axis
-        height = pred_config.virtual_box.height  # z-axis
+        depth = config["virtual_box"]["depth"]  # x-axis
+        width = config["virtual_box"]["width"]  # y-axis
+        height = config["virtual_box"]["height"]  # z-axis
 
         self.xlim = (center[0] - depth / 2, center[0] + depth / 2)
         self.ylim = (center[1] - width / 2, center[1] + width / 2)
         self.zlim = (center[2] - height / 2, center[2] + height / 2)
 
-        self.downsample = pred_config.setting.downsample
-        f_predictor = pred_config.setting.f_predictor
-        f_downsample = pred_config.setting.f_downsample
+        self.downsample = config["setting"]["downsample"]
 
-        self.filter_order = pred_config.setting.filter_order
-        self.decimate_factor = int(f_predictor / f_downsample)
+        if self.downsample:
+            f_predictor = config["setting"]["f_predictor"]
+            f_downsample = config["setting"]["f_downsample"]
+
+            self.filter_order = config["setting"]["filter_order"]
+            self.decimate_factor = int(f_predictor / f_downsample)
 
     def filter(self, t_pred, q_t_pred) -> ndarray:
         t_pred = array(t_pred)
@@ -105,19 +111,38 @@ class VirtualBox:
 
 
 class OmniSpace:
-    def __init__(self, pred_config) -> None:
-        self.downsample = pred_config.setting.downsample
-        f_predictor = pred_config.setting.f_predictor
-        f_downsample = pred_config.setting.f_downsample
+    def __init__(self, config) -> None:
+        self.downsample = config["setting"]["downsample"]
 
-        self.filter_order = pred_config.setting.filter_order
-        self.decimate_factor = int(f_predictor / f_downsample)
+        if self.downsample:
+            f_predictor = config["setting"]["f_predictor"]
+            f_downsample = config["setting"]["f_downsample"]
+
+            self.filter_order = config["setting"]["filter_order"]
+            self.decimate_factor = int(f_predictor / f_downsample)
 
     def filter(self, t_pred, q_t_pred) -> ndarray:
         if self.downsample:
+            print(len(q_t_pred))
             t_pred = decimate(t_pred, self.decimate_factor, self.filter_order)
             q_t_pred = decimate(
                 q_t_pred, self.decimate_factor, self.filter_order, axis=0
             )
 
         return t_pred, q_t_pred
+
+
+if __name__ == "__main__":
+    config = {"filter_method": "omni", "setting": {"downsample": False}}
+    filter = PredictionFilter.load_filter(config)
+
+    x = filter.filter(
+        [0.0, 0.1, 0.2, 0.3],
+        [
+            [0.1, 0.1, 0.1],
+            [0.1, 0.1, 0.1],
+            [0.1, 0.1, 0.1],
+            [0.1, 0.1, 0.1],
+        ],
+    )
+    print(x)

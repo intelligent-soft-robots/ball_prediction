@@ -1,19 +1,30 @@
 import pathlib
 import time
+import tomlkit
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tomlkit
-
 from aimy_target_shooting.export_tools import import_all_from_hdf5
-from ball_prediction.trajectory_prediction import TrajectoryPredictor
-from .utils import load_toml
 
-def load_predictor():
-    prediction_config_path = pathlib.Path("./config/prediction.toml")
+from ball_prediction.trajectory_prediction import TrajectoryPredictor
+
+
+def load_toml(file_path: str):
+    with open(pathlib.Path(file_path), mode="r") as fp:
+        config = fp.read()
+        config_dict = dict(tomlkit.parse(config))
+
+    return config_dict
+
+
+def load_config():
+    prediction_config_path = pathlib.Path(
+        "/home/adittrich/test_workspace/workspace/src/ball_prediction/config/config.toml"
+    )
     predict_config = load_toml(prediction_config_path)
 
-    return TrajectoryPredictor(predict_config)
+    return predict_config
+
 
 def run_predictor():
     # Get test data
@@ -32,11 +43,19 @@ def run_predictor():
     q_init[3:6] = velocities[9, :]
 
     P_init = np.eye(9)
-    t_init = time_stamps[9]
+    R = np.diag([0.4, 0.4, 0.4, 4.2, 4.2, 4.2])
 
     # Load predictor
-    predictor = load_predictor()
-    predictor.initialize_predictor(time_stamp=t_init, q_init=q_init, P_init=P_init)
+    config = load_config()
+    init_buffer_size = config["setting"]["init_buffer_size"]
+
+    predictor = TrajectoryPredictor(config)
+    predictor.initialize_predictor(q_init=q_init, P_init=P_init)
+    predictor.set_R(R)
+
+    # Evaluation storage
+    pos_eval = []
+    vel_eval = []
 
     time_stamps_predictions = []
     position_predictions = []
@@ -44,7 +63,17 @@ def run_predictor():
     time_stamps_predictions_unfiltered = []
     position_predictions_unfiltered = []
 
-    for i in range(10, len(positions)):
+    for i in range(init_buffer_size):
+        t_current = time_stamps[i]
+        p = positions[i]
+        v = velocities[i]
+
+        z = np.hstack((p, v))
+
+        predictor.t.append(t_current)
+        predictor.z.append(z)
+
+    for i in range(init_buffer_size, len(positions)):
         t_current = time_stamps[i]
         p = positions[i]
         v = velocities[i]
@@ -52,37 +81,40 @@ def run_predictor():
         z = np.hstack((p, v))
 
         t_0 = time.time()
-        predictor.kalman_update_step(z, t_current)
-        dt = time.time() - t_0
+        # <------------------------------------>
+        predictor.kalman_update_step()
+        # <------------------------------------>
+        deltat = time.time() - t_0
 
-        if i % 15 == 0:
-            # print(f"Update time: {dt}")
+        if i % 10 == 0 and i != 0:
+            # print(f"Update time: {deltat}")
 
             t_0 = time.time()
             # <-------------------------->
-            predictor.predict_horizont()
+            predictor.predict_horizon()
             # <-------------------------->
-            dt = time.time() - t_0
-            print(f"Prediction time: {dt}")
+            deltat = time.time() - t_0
+            print(f"Prediction time: {deltat}")
 
+            # Uniltered Predictions
             t_pred, q_pred = predictor.get_prediction(filter=False)
-
             time_stamps_predictions_unfiltered.append(t_pred)
             position_predictions_unfiltered.append(q_pred)
 
+            # Filtered Predictions
             t_pred, q_pred = predictor.get_prediction()
-
             time_stamps_predictions.append(t_pred)
             position_predictions.append(q_pred)
 
-    t_ests = np.array(predictor.t_ests)
-    q_ests = np.array(predictor.q_ests)
+        pos_eval.append(p)
+        vel_eval.append(v)
+
+    positions_estimated = np.array(predictor.q_ests)
 
     _plotting_predictions(
         time_stamps,
         positions,
-        t_ests,
-        q_ests,
+        positions_estimated,
         time_stamps_predictions,
         position_predictions,
         time_stamps_predictions_unfiltered,
@@ -90,7 +122,8 @@ def run_predictor():
     )
 
 
-def run_predictor_with_initial_state_estimator():
+def run_predictor_init_estimate():
+    # Get test data
     path = "/home/adittrich/Nextcloud/82_Data_Processed/MN5008_training_data_with_outlier/MN5008_grid_data_equal_speeds.hdf5"
     collection = import_all_from_hdf5(file_path=path)
 
@@ -100,9 +133,10 @@ def run_predictor_with_initial_state_estimator():
     velocities = np.array(data.velocities)
 
     # Load predictor
-    predictor = load_predictor()
+    config = load_config()
+    init_buffer_size = config["setting"]["init_buffer_size"]
+    predictor = TrajectoryPredictor(config)
 
-    # Logging
     time_stamps_predictions = []
     position_predictions = []
 
@@ -116,29 +150,38 @@ def run_predictor_with_initial_state_estimator():
 
         z = np.hstack((p, v))
 
+        t_0 = time.time()
+        # <------------------------------------>
         predictor.input_samples(z, t_current)
+        # <------------------------------------>
+        deltat = time.time() - t_0
 
-        if i % 15 == 0:
+        if i % 10 == 0 and i != 0:
+            # print(f"Update time: {deltat}")
+
+            t_0 = time.time()
+            # <-------------------------->
+            predictor.predict_horizon()
+            # <-------------------------->
+            deltat = time.time() - t_0
+            print(f"Prediction time: {deltat}")
+
+            # Uniltered Predictions
             t_pred, q_pred = predictor.get_prediction(filter=False)
+            time_stamps_predictions_unfiltered.append(t_pred)
+            position_predictions_unfiltered.append(q_pred)
 
-            if q_pred is not None:
-                time_stamps_predictions_unfiltered.append(t_pred)
-                position_predictions_unfiltered.append(q_pred)
-
+            # Filtered Predictions
             t_pred, q_pred = predictor.get_prediction()
+            time_stamps_predictions.append(t_pred)
+            position_predictions.append(q_pred)
 
-            if q_pred is not None:
-                time_stamps_predictions.append(t_pred)
-                position_predictions.append(q_pred)
-
-    t_ests = np.array(predictor.t_ests)
-    q_ests = np.array(predictor.q_ests)
+    positions_estimated = np.array(predictor.q_ests)
 
     _plotting_predictions(
-        time_stamps,
-        positions,
-        t_ests,
-        q_ests,
+        time_stamps[init_buffer_size:],
+        positions[init_buffer_size:],
+        positions_estimated,
         time_stamps_predictions,
         position_predictions,
         time_stamps_predictions_unfiltered,
@@ -152,7 +195,8 @@ def prediction_error():
     collection = collection[0:40]
 
     # Load predictor
-    predictor = load_predictor()
+    config = load_config()
+    predictor = TrajectoryPredictor(config)
 
     t_storage = []
     q_error_storage = []
@@ -246,7 +290,6 @@ def _plotting_prediction(t_measured, p_measured, t_predicted, q_predicted):
 def _plotting_predictions(
     t_measured,
     p_measured,
-    t_estimated,
     p_estimated,
     t_predictions,
     p_predictions,
@@ -256,7 +299,6 @@ def _plotting_predictions(
     t_measured = np.array(t_measured)
     p_measured = np.array(p_measured)
 
-    t_estimated = np.array(t_estimated)
     p_estimated = np.array(p_estimated)
 
     alpha = 0.6
@@ -326,7 +368,7 @@ def _plotting_predictions(
                 j += 1
 
         ax.plot(t_measured, p_measured[:, i], label="measured")
-        ax.plot(t_estimated, p_estimated[:, i], label="estimate", linestyle="dotted")
+        ax.plot(t_measured, p_estimated[:, i], label="estimate", linestyle="dotted")
 
         ax.legend()
 
@@ -405,7 +447,9 @@ def test_time_prediction():
     P_init = np.eye(9)
 
     # Load predictor
-    predictor = load_predictor()
+    config = load_config()
+    predictor = TrajectoryPredictor(config)
+
     predictor.initialize_kalman(q_init=q_init, P_init=P_init)
 
     for i in range(10, 50):
@@ -419,7 +463,7 @@ def test_time_prediction():
 
 
 if __name__ == "__main__":
+    # run_predictor()
+    run_predictor_init_estimate()
     # prediction_error()
-    run_predictor()
     # test_time_prediction()
-    # run_predictor_with_initial_state_estimator()
