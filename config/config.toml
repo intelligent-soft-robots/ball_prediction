@@ -1,5 +1,5 @@
 estimation_method = "regression" # direct, finite, regression
-filter_method = "plane" # plane, box, omni, fixed-step
+filter_method = "plane" # plane, box, unfiltered
 
 [setting]
 t_prediction_horizon = 2.00 # [s]

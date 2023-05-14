@@ -1,9 +1,19 @@
+from typing import Tuple
+
 from numpy import array, eye, ndarray, zeros
 from numpy.linalg import inv
 
 
 class ExtendedKalmanFilter:
     def __init__(self, dim_q: int, dim_z: int, dim_u: int = 0) -> None:
+        """Initialisation of barebone kalman filter
+
+        Args:
+            dim_q (int): Dimensionality of state.
+            dim_z (int): Dimensionality of measurements
+            dim_u (int, optional): Dimensionality of control signal.
+            Defaults to 0 for a unactuated passive system.
+        """
         self.dim_q = dim_q
         self.dim_z = dim_z
         self.dim_u = dim_u
@@ -21,7 +31,7 @@ class ExtendedKalmanFilter:
         self.B = 0
         self.I = eye(dim_q)
 
-    def predict_state(self, u, dt):
+    def predict_state(self, u: ndarray, dt: float) -> ndarray:
         """Needs to be overwritten for specific system"""
         q = self.q
 
@@ -30,7 +40,18 @@ class ExtendedKalmanFilter:
 
         return F @ q + B @ u
 
-    def predict(self, dt: float) -> None:
+    def predict(self, dt: float) -> Tuple[ndarray, ndarray]:
+        """Prediction step of Extended Kalman Filter. Takes estimated
+        state and given state transition model specified by predict_state
+        and FJacobian and predicts future state.
+
+        Args:
+            dt (float): time step
+
+        Returns:
+            Tuple[ndarray, ndarray]: Predicted state vector and predicted
+            Covariance matrix.
+        """
         # Fetch variables
         q = self.q
         P = self.P
@@ -48,7 +69,17 @@ class ExtendedKalmanFilter:
 
         return q, P
 
-    def update(self, z: ndarray) -> None:
+    def update(self, z: ndarray) -> Tuple[ndarray, ndarray]:
+        """Updates current prediction with kalman estimate step.
+
+        Args:
+            z (ndarray): latest measurement complying the measurement
+            model specified with the functions HJacobian and hq
+
+        Returns:
+            Tuple[ndarray, ndarray]: Estimated state vector and
+            estimated Covariance matrix.
+        """
         z = array(z)
         q = self.q
 

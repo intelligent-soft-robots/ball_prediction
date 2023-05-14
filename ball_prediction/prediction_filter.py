@@ -1,33 +1,38 @@
 import logging
+from typing import Sequence, Union, Tuple
 
 from numpy import array, ndarray, where
 from scipy.interpolate import InterpolatedUnivariateSpline, make_interp_spline
 from scipy.signal import decimate
 
 
-class PredictionFilter:
-    def load_filter(config: dict):
-        filter_name = config["filter_method"]
-        filters = {"omni": OmniSpace, "plane": VirtualPlane, "box": VirtualBox}
-
-        if filter_name in filters:
-            return filters[filter_name](config)
-        else:
-            raise ValueError(f"Invalid filter name: {filter_name}")
-
-
-class NoFilter:
-    def __init__(self, config) -> None:
-        self.config = config
-
-
 class VirtualPlane:
-    def __init__(self, config) -> None:
+    """The virtual plane filter returns the hitting point of the predicted
+    trajectory with a virtual plane specified by offset and axis.
+    """
+
+    def __init__(self, config: dict) -> None:
+        """Initialises Unfiltered prediction filter.
+
+        Args:
+            config (dict): Configuration dict with parameters.
+        """
         self.axis = config["virtual_plane"]["axis"]
         self.offset = config["virtual_plane"]["offset"]
         self.spline_deg = config["virtual_plane"]["spline_deg"]
 
-    def filter(self, t_pred, q_t_pred):
+    def filter(
+        self, t_pred: Sequence[float], q_t_pred: Sequence[Tuple[float]]
+    ) -> Tuple[Sequence[float], Sequence[ndarray]]:
+        """Applies unfiltered filter.
+
+        Args:
+            t_pred (Sequence[float]): Time stamps.
+            q_t_pred (Sequence[Tuple[float]]): Filtered states.
+
+        Returns:
+            Tuple[ndarray, ndarray]: Filtered predictions.
+        """
         q_t_pred = array(q_t_pred)
 
         if len(q_t_pred) <= self.spline_deg:
@@ -58,7 +63,17 @@ class VirtualPlane:
 
 
 class VirtualBox:
-    def __init__(self, config) -> None:
+    """The virtual box filter returns all prediction samples in a volume
+    specified by the center position and the depth, width and height
+    parameter.
+    """
+
+    def __init__(self, config: dict) -> None:
+        """Initialises Unfiltered prediction filter.
+
+        Args:
+            config (dict): Configuration dict with parameters.
+        """
         center = config["virtual_box"]["center"]
 
         depth = config["virtual_box"]["depth"]  # x-axis
@@ -78,7 +93,18 @@ class VirtualBox:
             self.filter_order = config["setting"]["filter_order"]
             self.decimate_factor = int(f_predictor / f_downsample)
 
-    def filter(self, t_pred, q_t_pred) -> ndarray:
+    def filter(
+        self, t_pred: Sequence[float], q_t_pred: Sequence[Tuple[float]]
+    ) -> Tuple[ndarray, ndarray]:
+        """Applies unfiltered filter.
+
+        Args:
+            t_pred (Sequence[float]): Time stamps.
+            q_t_pred (Sequence[Tuple[float]]): Filtered states.
+
+        Returns:
+            Tuple[ndarray, ndarray]: Filtered predictions.
+        """
         t_pred = array(t_pred)
         q_t_pred = array(q_t_pred)
 
@@ -110,8 +136,17 @@ class VirtualBox:
         return t_filtered, p_t_filtered
 
 
-class OmniSpace:
-    def __init__(self, config) -> None:
+class Unfiltered:
+    """Predictions are downsampled and directly returned without any further
+    filters.
+    """
+
+    def __init__(self, config: dict) -> None:
+        """Initialises Unfiltered prediction filter.
+
+        Args:
+            config (dict): Configuration dict with parameters.
+        """
         self.downsample = config["setting"]["downsample"]
 
         if self.downsample:
@@ -121,9 +156,19 @@ class OmniSpace:
             self.filter_order = config["setting"]["filter_order"]
             self.decimate_factor = int(f_predictor / f_downsample)
 
-    def filter(self, t_pred, q_t_pred) -> ndarray:
+    def filter(
+        self, t_pred: Sequence[float], q_t_pred: Sequence[Tuple[float]]
+    ) -> Tuple[ndarray, ndarray]:
+        """Applies unfiltered filter.
+
+        Args:
+            t_pred (Sequence[float]): Time stamps.
+            q_t_pred (Sequence[Tuple[float]]): Filtered states.
+
+        Returns:
+            Tuple[ndarray, ndarray]: Filtered predictions.
+        """
         if self.downsample:
-            print(len(q_t_pred))
             t_pred = decimate(t_pred, self.decimate_factor, self.filter_order)
             q_t_pred = decimate(
                 q_t_pred, self.decimate_factor, self.filter_order, axis=0
@@ -132,8 +177,34 @@ class OmniSpace:
         return t_pred, q_t_pred
 
 
+class PredictionFilter:
+    """Wrapper class for loading prediction filters."""
+
+    def load_filter(config: dict) -> Union[Unfiltered, VirtualBox, VirtualPlane]:
+        """Loads filter with parameters from given configuration dict
+
+        Args:
+            config (dict): Configuration parameters.
+
+        Raises:
+            ValueError: Raised if specified filter in configuration dict
+            is not valid.
+
+        Returns:
+            Union[Unfiltered, VirtualBox, VirtualPlane]: Returns filter class according
+            to specified filter_name in configuration dict.
+        """
+        filter_name = config["filter_method"]
+        filters = {"unfiltered": Unfiltered, "plane": VirtualPlane, "box": VirtualBox}
+
+        if filter_name in filters:
+            return filters[filter_name](config)
+        else:
+            raise ValueError(f"Invalid filter name: {filter_name}")
+
+
 if __name__ == "__main__":
-    config = {"filter_method": "omni", "setting": {"downsample": False}}
+    config = {"filter_method": "unfiltered", "setting": {"downsample": False}}
     filter = PredictionFilter.load_filter(config)
 
     x = filter.filter(

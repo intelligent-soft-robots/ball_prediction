@@ -13,7 +13,7 @@ def load_data():
     return collection
 
 
-def add_outlier():
+def generate_noisy_trajectory_streams():
     number_trajectories = 10
     number_outliers = 21
     time_stamp_noise = 0.01
@@ -46,8 +46,7 @@ def add_outlier():
                 for _ in range(n_konsective_outliers):
                     ball_id_stream.append(-1)
                     time_stamps_stream.append(
-                        iteration * dt
-                        + time_stamp_noise * np.random.standard_normal()
+                        iteration * dt + time_stamp_noise * np.random.standard_normal()
                     )
                     positions_stream.append(outlier_position)
                     velocities_stream.append(outlier_velocity)
@@ -77,6 +76,7 @@ def add_outlier():
             iteration += 1
 
     return ball_id_stream, time_stamps_stream, positions_stream, velocities_stream
+
 
 #######################################################
 ###################### predictor ######################
@@ -157,4 +157,7 @@ def run_predictor():
 
 
 if __name__ == "__main__":
-    run_predictor()
+    for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
+        print(f"{b}, {p}")
+
+    # run_predictor()
