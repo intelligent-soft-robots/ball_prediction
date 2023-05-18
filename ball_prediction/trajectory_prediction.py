@@ -1,3 +1,4 @@
+import logging
 import cProfile as profile
 from typing import Optional, Sequence, Tuple
 
@@ -37,14 +38,17 @@ class TrajectoryPredictor(BallTrajectoryEKF):
 
         super().__init__(config=config, ball_model=self.ball_model)
 
-        # Storage
-        self.t_current = 0.0
-
+        # Overall measurement storage
         self.t = []
         self.z = []
 
-        self.q_preds = []
-        self.q_ests = []
+        # Simulated trajectory based on current estimated state
+        self.t_simulated = []
+        self.q_simulated = []
+
+        # Estimated and predicted states by EKF
+        self.q_predicted = []
+        self.q_estimated = []
 
     def initialize_predictor(
         self,
@@ -72,35 +76,40 @@ class TrajectoryPredictor(BallTrajectoryEKF):
 
         q = self.q.copy()
 
-        if len(self.t) >= 2:
+        if self.init_buffer_size <= len(self.z):
+            # State q is not intialized yet.
+            # t_current requires at least 2 time stamps in t storage
+
             t_current = self.t[-1] - self.t[0]
             duration = self.t_prediction_horizon - t_current
             dt = 1 / self.f_predictor
 
-            self.t_pred = arange(t_current, self.t_prediction_horizon, dt)
-            self.q_pred = self.ball_model.simulate(q, duration, dt)
+            self.t_simulated = arange(t_current, self.t_prediction_horizon, dt)
+            self.q_simulated = self.ball_model.simulate(q, duration, dt)
 
     def kalman_update_step(self) -> None:
         """Performs kalman update step with latest measurement in measurement
         storage.
         """
-        dt = self.t[-1] - self.t[-2]
-        q_pred, q_est, P_pred, P_est = self.predict_update(self.z[-1], dt)
+        if len(self.t) > 1:
+            dt = self.t[-1] - self.t[-2]
 
-        self.q_preds.append(q_pred)
-        self.q_ests.append(q_est)
+            q_pred, q_est, P_pred, P_est = self.predict_update(self.z[-1], dt)
+
+            self.q_predicted.append(q_pred)
+            self.q_estimated.append(q_est)
 
     def reset_predictions(self) -> None:
         """Resets predictions and covariance matrix."""
-        self.t_pred = []
-        self.q_pred = []
-        self.P = self.P_init
+        self.t_simulated = []
+        self.q_simulated = []
 
-    def reset(self) -> None:
+    def reset_ekf(self) -> None:
         """Resets predictor by removing all stored samples."""
         self.t = []
         self.z = []
 
+        self.reset_predictions()
         self.reset_P()
 
     def input_samples(self, z: Sequence[float], time_stamp: float) -> None:
@@ -116,6 +125,8 @@ class TrajectoryPredictor(BallTrajectoryEKF):
         self.t.append(time_stamp)
         self.z.append(z)
 
+        # initial buffer size should be minimum 2 samples
+
         if self.init_buffer_size < len(self.z):
             self.kalman_update_step()
             self.predict_horizon()
@@ -130,35 +141,37 @@ class TrajectoryPredictor(BallTrajectoryEKF):
                 R = diag(std(self.z, axis=0))
                 self.set_R(R)
 
-        self.t_current = time_stamp
-
     def get_prediction(
         self, filter: bool = True
     ) -> Tuple[Sequence[float], Sequence[float]]:
         """Returns predictions from current predicted state.
 
         Args:
-            filter (bool, optional): For debugging purposes also unfiltered 
-            predictions can be returned. 
+            filter (bool, optional): For debugging purposes also unfiltered
+            predictions can be returned.
             This can be specified via the filter argument. Defaults to True.
 
         Returns:
-            Tuple[Sequence[float], Sequence[float]]: Filtered prediction 
+            Tuple[Sequence[float], Sequence[float]]: Filtered prediction
             according to parameters set in configuration file.
         """
-        t_pred = self.t_pred
-        q_pred = self.q_pred
+        t_simulated = self.t_simulated
+        q_simulated = self.q_simulated
 
-        if len(q_pred) == 0:
+        if len(q_simulated) == 0:
             return [], []
 
-        if filter:
-            t_pred, q_pred = self.prediction_filter.filter(t_pred, q_pred)
+        if len(t_simulated) != len(q_simulated):
+            logging.warning(
+                f"Length of time {len(t_simulated)} and "
+                f"states {len(q_simulated)} do not match!"
+            )
+            return [], []
 
-        return t_pred, q_pred
+        if filter and len(q_simulated) > 10:
+            # filter methods require some samples to work efficiently
+            t_simulated, q_simulated = self.prediction_filter.filter(
+                t_simulated, q_simulated
+            )
 
-    def profile_predict(self) -> None:
-        profile.runctx("self.predict_horizont()", globals(), locals())
-
-    def profile_update(self, z, t) -> None:
-        profile.runctx("self.kalman_update_step(z, t)", globals(), locals())
+        return t_simulated, q_simulated

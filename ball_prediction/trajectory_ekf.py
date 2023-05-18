@@ -66,7 +66,7 @@ class BallTrajectoryEKF(ExtendedKalmanFilter):
         """Utility function to reset covariance matrix P to initial
         coveriance matrix P.
         """
-        self.ekf.P = self.P_init
+        self.P = self.P_init
 
     def set_Q(self, Q: ndarray):
         """Utility function to set the process uncertainty.

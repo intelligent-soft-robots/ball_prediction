@@ -78,6 +78,11 @@ def generate_noisy_trajectory_streams():
     return ball_id_stream, time_stamps_stream, positions_stream, velocities_stream
 
 
+def print_predictor():
+    for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
+        print(f"{b}, {t}: {p}")
+
+
 #######################################################
 ###################### predictor ######################
 #######################################################
@@ -85,8 +90,6 @@ def generate_noisy_trajectory_streams():
 import pathlib
 import tomlkit
 
-import signal_handler
-import tennicam_client
 from numpy import hstack
 
 from ball_prediction.trajectory_prediction import TrajectoryPredictor
@@ -96,44 +99,36 @@ TENNICAM_CLIENT_DEFAULT_SEGMENT_ID = "tennicam_client"
 
 class TennicamClientPredictor:
     def __init__(self, config_path) -> None:
-        # Tennicam initialisation
-        global TENNICAM_CLIENT_DEFAULT_SEGMENT_ID
-        self.frontend = tennicam_client.FrontEnd(TENNICAM_CLIENT_DEFAULT_SEGMENT_ID)
+        config = load_toml(config_path)
+        self.predictor = TrajectoryPredictor(config)
 
         # Predictor initialisation
+        self.negative_ball_threshold = config["misc"]["n_negative_ball_threshold"]
         self.n_negative_ball_id = 0
-        self.predictor = TrajectoryPredictor(load_toml(config_path))
 
     def run_predictor(self):
-        iteration = self.frontend.latest().get_iteration()
         try:
-            while not signal_handler.has_received_sigint():
-                iteration += 1
-                obs = self.frontend.read(iteration)
-
-                ball_id = obs.get_ball_id()
+            for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
+                ball_id = b
 
                 if ball_id != -1:
-                    time_stamp = obs.get_time_stamp() * 10e-9
-                    position = obs.get_position()
-                    velocity = obs.get_velocity()
+                    time_stamp = t
+                    position = p
+                    velocity = v
                     z = hstack((position, velocity))
 
                     self.predictor.input_samples(z, time_stamp)
                     self.predictor.predict_horizon()
                     prediction = self.predictor.get_prediction()
 
-                    print(f"Position: {position}, Predict: {prediction}")
-
-                    if prediction[0]:
-                        raise KeyboardInterrupt(f"interrupt")
+                print(f"{b}, Position: {position}, Predict: {prediction}")
 
                 if ball_id == -1:
                     self.n_negative_ball_id += 1
 
-                    if self.n_negative_ball_id == 20:
+                    if self.n_negative_ball_id == self.negative_ball_threshold:
                         self.n_negative_ball_id = 0
-                        self.predictor.reset_predictions()
+                        self.predictor.reset_ekf()
 
         except (KeyboardInterrupt, SystemExit):
             pass
@@ -157,7 +152,7 @@ def run_predictor():
 
 
 if __name__ == "__main__":
-    for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
-        print(f"{b}, {p}")
+    # for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
+    #    print(f"{b}, {t}: {p}")
 
-    # run_predictor()
+    run_predictor()

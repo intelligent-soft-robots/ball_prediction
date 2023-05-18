@@ -45,6 +45,7 @@ class VirtualPlane:
             return [], []
 
         p_t_pred = q_t_pred[:, 0:3]
+
         p_t_offset = p_t_pred[:, self.axis] - self.offset
         univariate_spline = InterpolatedUnivariateSpline(t_pred, p_t_offset)
 

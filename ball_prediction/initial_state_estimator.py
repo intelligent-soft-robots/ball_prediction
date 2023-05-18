@@ -1,3 +1,4 @@
+import logging
 from typing import Sequence, Union
 
 from numpy import array, gradient, hstack, ndarray
@@ -38,7 +39,9 @@ class DirectMeasurement:
             Sequence[float]: Initital state.
         """
         estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
-        print(estimate)
+
+        logging.info("\033[31m" + f"{estimate}" + "\033[0m")
+
         return hstack((estimate, [0, 0, 0]))
 
 
@@ -70,12 +73,12 @@ class FiniteDifferencesEstimator:
 
         velocities = []
         for axis in range(3):
-            velocity = gradient(measurements[:, axis], time_stamps)
-            velocities.append(velocity)
+            velocity = gradient(measurements[:, axis], time_stamps, axis=0)
+            velocities.append(velocity[-1])
 
         velocities = array(velocities)
 
-        return hstack((measurements[-1], velocities[-1]))
+        return hstack((measurements[-1, 0:3], velocities))
 
     def estimate_extended_state_space(
         self, time_stamps: Sequence[float], measurements: Sequence[Sequence[float]]
@@ -90,6 +93,9 @@ class FiniteDifferencesEstimator:
             Sequence[float]: Initial state vector.
         """
         estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
+
+        logging.info(estimate)
+
         return hstack((estimate, [0, 0, 0]))
 
 
@@ -159,6 +165,7 @@ class RegressionEstimator:
             Sequence[float]: Initital state.
         """
         estimate = self.estimate(time_stamps=time_stamps, measurements=measurements)
+        logging.info(estimate)
         return hstack((estimate, [0, 0, 0]))
 
 
