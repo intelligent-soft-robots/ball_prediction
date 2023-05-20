@@ -1,5 +1,4 @@
 import logging
-import cProfile as profile
 from typing import Optional, Sequence, Tuple
 
 import ball_models
@@ -29,6 +28,7 @@ class TrajectoryPredictor(BallTrajectoryEKF):
         self.f_predictor = config["setting"]["f_predictor"]
         self.init_buffer_size = config["setting"]["init_buffer_size"]
         self.dynamic_R = config["setting"]["dynamic_R"]
+        self.fixed_prediction_horizont = config["setting"]["fixed_prediction_horizont"]
 
         self.prediction_filter = PredictionFilter.load_filter(config)
         self.inital_state_estimator = InitialStateEstimator.load_estimator(config)
@@ -71,21 +71,40 @@ class TrajectoryPredictor(BallTrajectoryEKF):
     def predict_horizon(self) -> None:
         """Predicts the future ball states on basis of current estimate of
         predictor.
+
+        By modifying fixed_prediction_horizont in the configuration file,
+        the stored prediction length can be varied.
+
+        For fixed_prediction_horizont equal to True, the overall prediction
+        horizon is fixed until a specified time stamp. The later the prediction
+        starts the smaller will be the prediction size.
+
+        Forfixed_prediction_horizont to False, there will be a fixed number
+        of predictions generated starting from current time_stamp.
         """
         self.reset_predictions()
-
-        q = self.q.copy()
 
         if self.init_buffer_size <= len(self.z):
             # State q is not intialized yet.
             # t_current requires at least 2 time stamps in t storage
-
-            t_current = self.t[-1] - self.t[0]
-            duration = self.t_prediction_horizon - t_current
+            q = self.q.copy()
             dt = 1 / self.f_predictor
 
-            self.t_simulated = arange(t_current, self.t_prediction_horizon, dt)
+            if self.fixed_prediction_horizont:
+                # fixed prediction horizon
+                t_current = self.t[-1] - self.t[0]
+                t_end = self.t_prediction_horizon
+                duration = self.t_prediction_horizon - t_current + dt
+            else:
+                # fixed number of samples from current time_step
+                t_current = self.t[-1] - self.t[0]
+                t_end = t_current + self.t_prediction_horizon
+                duration = self.t_prediction_horizon
+
+            self.t_simulated = arange(t_current, t_end, dt)
             self.q_simulated = self.ball_model.simulate(q, duration, dt)
+        else:
+            logging.info(f"Initial estimate not performed yet!")
 
     def kalman_update_step(self) -> None:
         """Performs kalman update step with latest measurement in measurement
