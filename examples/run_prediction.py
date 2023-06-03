@@ -1,16 +1,15 @@
-import h5py
 import logging
 import pathlib
 import time
-import tomlkit
 from typing import Optional
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from aimy_target_shooting.export_tools import import_all_from_hdf5
+import tomlkit
 
-from ball_prediction.trajectory_prediction import TrajectoryPredictor
 from ball_prediction.prediction_filter import VirtualPlane
+from ball_prediction.trajectory_prediction import TrajectoryPredictor
 
 
 def load_toml(file_path: str):
@@ -360,5 +359,5 @@ def _plotting_predictions(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    # run_predictor()
-    prediction_error()
+    run_predictor()
+    # prediction_error()

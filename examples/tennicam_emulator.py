@@ -1,8 +1,9 @@
 import pathlib
 
 import numpy as np
-
 from aimy_target_shooting.export_tools import import_all_from_hdf5
+
+
 
 
 def load_data():
@@ -88,8 +89,8 @@ def print_predictor():
 #######################################################
 
 import pathlib
-import tomlkit
 
+import tomlkit
 from numpy import hstack
 
 from ball_prediction.trajectory_prediction import TrajectoryPredictor
@@ -107,11 +108,10 @@ class TennicamClientPredictor:
         self.n_negative_ball_id = 0
 
     def run_predictor(self):
+        predictions = []
         try:
             for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
-                ball_id = b
-
-                if ball_id != -1:
+                if b != -1:
                     time_stamp = t
                     position = p
                     velocity = v
@@ -120,10 +120,13 @@ class TennicamClientPredictor:
                     self.predictor.input_samples(z, time_stamp)
                     self.predictor.predict_horizon()
                     prediction = self.predictor.get_prediction()
+                    predictions.append(prediction)
+                    
+                    print(f"{b}, Position: {position}, Predict: {len(prediction[1])}")
 
-                print(f"{b}, Position: {position}, Predict: {prediction}")
-
-                if ball_id == -1:
+                    if len(prediction[1]) != 0:
+                        print(prediction[1][-1])
+                if b == -1:
                     self.n_negative_ball_id += 1
 
                     if self.n_negative_ball_id == self.negative_ball_threshold:
@@ -134,7 +137,7 @@ class TennicamClientPredictor:
             pass
         except Exception as e:
             print("Error:", e)
-
+    
 
 def load_toml(file_path: str):
     with open(pathlib.Path(file_path), mode="r") as fp:

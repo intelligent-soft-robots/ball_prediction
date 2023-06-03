@@ -65,7 +65,7 @@ class TrajectoryPredictor(BallTrajectoryEKF):
         """
         if P_init is None:
             P_init = eye(len(q_init))
-
+        print(f"INITIAL STATE: {q_init}")
         self.initialize_kalman(q_init, P_init)
 
     def predict_horizon(self) -> None:
