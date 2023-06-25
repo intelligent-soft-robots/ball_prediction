@@ -1,7 +1,7 @@
 import logging
 from typing import Sequence, Union
 
-from numpy import array, gradient, hstack, ndarray
+from numpy import array, gradient, hstack
 from numpy.polynomial.polynomial import Polynomial
 
 
