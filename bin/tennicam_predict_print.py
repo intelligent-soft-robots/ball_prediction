@@ -52,7 +52,9 @@ class TennicamClientPredictor:
 
                     self.predictions.append(prediction)
 
-                    print(f"time_stamp: {time_stamp}, Position: {position}, Prediction: {prediction}")
+                    print(
+                        f"time_stamp: {time_stamp}, Position: {position}, Prediction: {prediction}"
+                    )
 
                     # if prediction[0]:
                     # raise KeyboardInterrupt(f"interrupt")

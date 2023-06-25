@@ -3,18 +3,18 @@ filter_method = "plane" # plane, box, unfiltered
 
 [setting]
 t_prediction_horizon = 1.5 # [s]
-f_predictor = 800
+f_predictor = 1000
 reset_height = 0.77
 init_buffer_size = 10
 f_downsample = 200
-downsample = true
-filter_order = 2
+downsample = false
+filter_order = 3
 dynamic_R = false
 fixed_prediction_horizont = true
 
 [virtual_plane]
 axis = 0 # 0 - x-axis, 1 - y-axis
-offset = 3.0 # [m]
+offset = 2.0 # [m]
 spline_deg = 3
 
 [virtual_box]
@@ -34,3 +34,12 @@ regressor_degree = 3
 
 [misc]
 n_negative_ball_threshold = 20
+
+[ball_dynamics]
+ball_mass = 0.0027
+ball_radius = 0.02
+air_density = 1.18
+graviational_constant = 9.80801
+drag_coefficient = 0.47016899
+lift_coefficient = 1.46968343
+decay_coefficient = 0.005054473513775579

@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Sequence, Tuple
 
 import ball_models
-from numpy import arange, diag, eye, ndarray, std
+from numpy import arange, array, diag, eye, hstack, ndarray, std
 
 from ball_prediction.initial_state_estimator import InitialStateEstimator
 from ball_prediction.prediction_filter import PredictionFilter
@@ -24,6 +24,7 @@ class TrajectoryPredictor(BallTrajectoryEKF):
         Args:
             config (dict): Configuration dict storing prediction parameters.
         """
+        # Initialize ekf predictor parameters
         self.t_prediction_horizon = config["setting"]["t_prediction_horizon"]
         self.f_predictor = config["setting"]["f_predictor"]
         self.init_buffer_size = config["setting"]["init_buffer_size"]
@@ -33,8 +34,24 @@ class TrajectoryPredictor(BallTrajectoryEKF):
         self.prediction_filter = PredictionFilter.load_filter(config)
         self.inital_state_estimator = InitialStateEstimator.load_estimator(config)
 
-        config_path = "/home/adittrich/test_workspace/workspace/src/ball_models/config/config.toml"
-        self.ball_model = ball_models.BallTrajectory(config_path)
+        # Initialize ball model parameters
+        ball_mass = config["ball_dynamics"]["ball_mass"]
+        ball_radius = config["ball_dynamics"]["ball_radius"]
+        air_density = config["ball_dynamics"]["air_density"]
+        graviational_constant = config["ball_dynamics"]["graviational_constant"]
+        drag_coefficient = config["ball_dynamics"]["drag_coefficient"]
+        lift_coefficient = config["ball_dynamics"]["lift_coefficient"]
+        decay_coefficient = config["ball_dynamics"]["decay_coefficient"]
+
+        self.ball_model = ball_models.BallTrajectory(
+            ball_mass,
+            ball_radius,
+            air_density,
+            graviational_constant,
+            drag_coefficient,
+            lift_coefficient,
+            decay_coefficient,
+        )
 
         super().__init__(config=config, ball_model=self.ball_model)
 
@@ -93,16 +110,16 @@ class TrajectoryPredictor(BallTrajectoryEKF):
             if self.fixed_prediction_horizont:
                 # fixed prediction horizon
                 t_current = self.t[-1] - self.t[0]
-                t_end = self.t_prediction_horizon
                 duration = self.t_prediction_horizon - t_current + dt
             else:
                 # fixed number of samples from current time_step
                 t_current = self.t[-1] - self.t[0]
-                t_end = t_current + self.t_prediction_horizon
                 duration = self.t_prediction_horizon
 
-            self.t_simulated = arange(t_current, t_end, dt)
-            self.q_simulated = self.ball_model.simulate(q, duration, dt)
+            self.t_simulated, self.q_simulated = self.ball_model.simulate(
+                q, duration, dt
+            )
+            self.t_simulated = array(self.t_simulated) + t_current
         else:
             logging.info(f"Initial estimate not performed yet!")
 
@@ -174,8 +191,8 @@ class TrajectoryPredictor(BallTrajectoryEKF):
             Tuple[Sequence[float], Sequence[float]]: Filtered prediction
             according to parameters set in configuration file.
         """
-        t_simulated = self.t_simulated
-        q_simulated = self.q_simulated
+        t_simulated = self.t_simulated.copy()
+        q_simulated = self.q_simulated.copy()
 
         if len(q_simulated) == 0:
             return [], []
@@ -185,6 +202,7 @@ class TrajectoryPredictor(BallTrajectoryEKF):
                 f"Length of time {len(t_simulated)} and "
                 f"states {len(q_simulated)} do not match!"
             )
+
             return [], []
 
         if filter and len(q_simulated) > 10:

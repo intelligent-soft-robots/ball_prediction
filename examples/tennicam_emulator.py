@@ -1,17 +1,70 @@
 import pathlib
+from typing import Optional
 
+import h5py
 import numpy as np
-from aimy_target_shooting.export_tools import import_all_from_hdf5
+import tomlkit
+
+from ball_prediction.trajectory_prediction import TrajectoryPredictor
+
+TENNICAM_CLIENT_DEFAULT_SEGMENT_ID = "tennicam_client"
 
 
+def load_toml(file_path: str):
+    with open(pathlib.Path(file_path), mode="r") as fp:
+        config = fp.read()
+        config_dict = dict(tomlkit.parse(config))
+
+    return config_dict
 
 
-def load_data():
-    path = "/home/adittrich/Nextcloud/80_Data/220817_v3_05_raw/20220817121555_bt_v3_f1_05.hdf5"
+def run_predictor():
+    script_dir = pathlib.Path(__file__).resolve().parent
+    config_dir = script_dir.parent / "config"
+    path = config_dir / "config.toml"
 
-    collection = import_all_from_hdf5(file_path=pathlib.Path(path))
+    predictor = TennicamClientPredictor(path)
 
-    return collection
+    predictor.run_predictor()
+
+
+def load_data(index: Optional[int] = None):
+    # Get test data
+    script_dir = pathlib.Path(__file__).resolve().parent
+    data_dir = script_dir / "data"
+    path = data_dir / "simple_ball_trajectories.hdf5"
+
+    group = "originals"
+
+    trajectory_collection = []
+    file = h5py.File(path, "r")
+
+    for i in list(file[group].keys()):
+        trajectory_data = {}
+
+        trajectory_data["launch_param"] = tuple(file[group][i]["launch_param"])
+        trajectory_data["time_stamps"] = list(file[group][i]["time_stamps"])
+        trajectory_data["positions"] = [
+            tuple(entry) for entry in list(file[group][i]["positions"])
+        ]
+        trajectory_data["velocities"] = [
+            tuple(entry) for entry in list(file[group][i]["velocities"])
+        ]
+
+        trajectory_collection.append(trajectory_data)
+
+    file.close()
+
+    if index is None:
+        return trajectory_collection
+
+    data = trajectory_collection[index]
+
+    time_stamps = np.array(data["time_stamps"])
+    positions = np.array(data["positions"])
+    velocities = np.array(data["velocities"])
+
+    return time_stamps, positions, velocities
 
 
 def generate_noisy_trajectory_streams():
@@ -84,20 +137,6 @@ def print_predictor():
         print(f"{b}, {t}: {p}")
 
 
-#######################################################
-###################### predictor ######################
-#######################################################
-
-import pathlib
-
-import tomlkit
-from numpy import hstack
-
-from ball_prediction.trajectory_prediction import TrajectoryPredictor
-
-TENNICAM_CLIENT_DEFAULT_SEGMENT_ID = "tennicam_client"
-
-
 class TennicamClientPredictor:
     def __init__(self, config_path) -> None:
         config = load_toml(config_path)
@@ -115,13 +154,13 @@ class TennicamClientPredictor:
                     time_stamp = t
                     position = p
                     velocity = v
-                    z = hstack((position, velocity))
+                    z = np.hstack((position, velocity))
 
                     self.predictor.input_samples(z, time_stamp)
                     self.predictor.predict_horizon()
                     prediction = self.predictor.get_prediction()
                     predictions.append(prediction)
-                    
+
                     print(f"{b}, Position: {position}, Predict: {len(prediction[1])}")
 
                     if len(prediction[1]) != 0:
@@ -137,25 +176,7 @@ class TennicamClientPredictor:
             pass
         except Exception as e:
             print("Error:", e)
-    
-
-def load_toml(file_path: str):
-    with open(pathlib.Path(file_path), mode="r") as fp:
-        config = fp.read()
-        config_dict = dict(tomlkit.parse(config))
-
-    return config_dict
-
-
-def run_predictor():
-    path = "/home/adittrich/test_workspace/workspace/src/ball_prediction/config/config.toml"
-    predictor = TennicamClientPredictor(path)
-
-    predictor.run_predictor()
 
 
 if __name__ == "__main__":
-    # for b, t, p, v in zip(*generate_noisy_trajectory_streams()):
-    #    print(f"{b}, {t}: {p}")
-
     run_predictor()

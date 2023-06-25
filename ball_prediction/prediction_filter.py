@@ -50,7 +50,6 @@ class VirtualPlane:
         univariate_spline = InterpolatedUnivariateSpline(t_pred, p_t_offset)
 
         crossing_times = list(univariate_spline.roots())
-        print(crossing_times)
 
         spline = make_interp_spline(t_pred, p_t_pred, axis=0)
 
@@ -85,10 +84,6 @@ class VirtualBox:
         self.xlim = (center[0] - depth / 2, center[0] + depth / 2)
         self.ylim = (center[1] - width / 2, center[1] + width / 2)
         self.zlim = (center[2] - height / 2, center[2] + height / 2)
-
-        print(self.xlim)
-        print(self.ylim)
-        print(self.zlim)
 
         self.downsample = config["setting"]["downsample"]
 
