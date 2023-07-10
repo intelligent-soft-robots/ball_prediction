@@ -41,6 +41,7 @@ def configure():
     print()
     return config
 
+
 def _load_toml(file_path: str):
     with open(Path(file_path), mode="r") as fp:
         config = fp.read()
@@ -93,7 +94,9 @@ class TennicamClientPredictor:
 def _logging(argv):
     # the first argument is the script name, so we skip that
     if len(argv) < 2:
-        print("No output file path provided. Please provide a path for the output file.")
+        print(
+            "No output file path provided. Please provide a path for the output file."
+        )
         path = Path(input())
         while not path.parent.exists():
             print("Invalid path, directory doesn't exist. Please enter a valid path:")
@@ -111,7 +114,7 @@ def _logging(argv):
     predictor = TennicamClientPredictor(path)
 
     try:
-        with h5py.File(str(path), 'a') as f:
+        with h5py.File(str(path), "a") as f:
             # Use the number of existing groups as the counter
             counter = len(f.keys())
 
@@ -123,7 +126,7 @@ def _logging(argv):
                 launch_parameters = np.random.random((10, 3))
 
                 # Create a new group for this set of data
-                grp = f.create_group(f'data_{counter}')
+                grp = f.create_group(f"data_{counter}")
 
                 # Add the datasets to the group
                 grp.create_dataset("timestamps", data=time_stamps)

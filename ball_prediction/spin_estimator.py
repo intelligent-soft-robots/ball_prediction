@@ -1,56 +1,168 @@
 import warnings
-from typing import Dict, List, Sequence, Tuple
+from enum import Enum
+from typing import Dict, List, Optional, Sequence, Union
 
-from numpy import abs, arctan2, array, hstack, meshgrid, ndarray, polynomial, sqrt, empty_like
-from scipy.signal import find_peaks
+from numpy import (
+    abs,
+    arctan2,
+    array,
+    cross,
+    empty,
+    empty_like,
+    meshgrid,
+    ndarray,
+    pi,
+    polynomial,
+    sqrt,
+)
+from numpy.linalg import norm
 
+
+class ContactType(Enum):
+    RACKET = "racket"
+    TABLE = "table"
+    UNKNOWN = "unknown"
+
+
+POLYNOMIAL_DEGREE = 3
+DETECTION_THRESHOLD = 0.1
 TABLE_PLANE_HEIGHT = 0.77
 TABLE_DETECTION_THRESHOLD = -0.03
 TABLE_DETECTION_SAMPLE_DISTANCE = 10
 
-def detect_racket_contact(
+
+def step_ball_simulation(ball_state, dt, integration_method: str = "euler_forward"):
+    # Constants
+    rho = 1.2  # Air density
+    Cd = 0.5  # Drag coefficient
+    g = 9.8  # Acceleration due to gravity
+    r = 0.1  # Radius of the ball
+    m = 0.5  # Mass of the ball
+    A = pi * r**2  # Cross-sectional area of the ball
+    S = pi * r**2  # Reference area for the Magnus effect
+
+    # Unpack ball state
+    x, y, z, vx, vy, vz, omegax, omegay, omegaz = ball_state
+
+    # Calculate the air resistance and Magnus force
+    v = sqrt(vx**2 + vy**2 + vz**2)
+    F_drag = -0.5 * Cd * rho * A * v * array([vx, vy, vz])
+    F_gravity = array([0, 0, -m * g])
+    F_magnus = (
+        0.5 * Cd * rho * S * cross(array([omegax, omegay, omegaz]), array([vx, vy, vz]))
+    )
+
+    # Calculate the acceleration and angular acceleration
+    a = (F_drag + F_gravity + F_magnus) / m
+
+    # Perform integration using the selected method
+    if integration_method == "semi_euler_forward":
+        ball_state += dt * array([vx, vy, vz, a[0], a[1], a[2], omegax, omegay, omegaz])
+    elif integration_method == "rk4":
+        k1 = dt * array([vx, vy, vz, a[0], a[1], a[2], omegax, omegay, omegaz])
+        k2 = dt * array(
+            [
+                vx + 0.5 * k1[3],
+                vy + 0.5 * k1[4],
+                vz + 0.5 * k1[5],
+                a[0],
+                a[1],
+                a[2],
+                omegax,
+                omegay,
+                omegaz,
+            ]
+        )
+        k3 = dt * array(
+            [
+                vx + 0.5 * k2[3],
+                vy + 0.5 * k2[4],
+                vz + 0.5 * k2[5],
+                a[0],
+                a[1],
+                a[2],
+                omegax,
+                omegay,
+                omegaz,
+            ]
+        )
+        k4 = dt * array(
+            [
+                vx + k3[3],
+                vy + k3[4],
+                vz + k3[5],
+                a[0],
+                a[1],
+                a[2],
+                omegax,
+                omegay,
+                omegaz,
+            ]
+        )
+        ball_state += (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+    return ball_state
+
+
+def get_regressed_state(
     time_stamps: ndarray,
     positions: ndarray,
+    polynomial_degree: int,
 ):
-    # we can apply here heavy filtering since we do not want to find
-    # peaks but changes of trends.
+    regressed_state = empty(6)
+
+    for axis in range(3):
+        position_polynomial = polynomial.Polynomial.fit(
+            time_stamps, positions[:, axis], deg=polynomial_degree
+        )
+
+        regressed_state[axis] = position_polynomial(
+            time_stamps[-1]
+        )  # Store last position
+        regressed_state[axis + 3] = position_polynomial.deriv()(
+            time_stamps[-1]
+        )  # Store last velocity
+
+    return regressed_state
 
 
-    # make a regression of the next 10 ball positions on basis of the last 10
-    # ball positions. If there is a significant change in direction it is either
-    # noise (position exceeds plausility threshold) or a contact
-
-    # contact_specification on? if yes, it requires a height and optionally a region
-    # 
-    pass
-    
-
-
-def detect_table_contact(
-    positions: ndarray, 
+def detect_rebounds(
+    time_stamps: ndarray,
+    positions: ndarray,
+    window_size: int,
+    polynomial_degree: int = POLYNOMIAL_DEGREE,
+    detection_threshold: float = DETECTION_THRESHOLD,
     table_height: float = TABLE_PLANE_HEIGHT,
-    detection_threshold: float = TABLE_DETECTION_THRESHOLD,
-    sample_distance: float = TABLE_DETECTION_SAMPLE_DISTANCE
-):
-    positions = array(positions)
-    positions_axis = positions[:, 2]
+) -> Union[List[int], Dict[int, ContactType]]:
+    contact_dict = {}
 
-    positions_axis -= table_height
-    positions_axis *= -1
+    for i in range(window_size, len(positions)):
+        positions_window = positions[i - window_size : i - 1, :]
 
-    table_contact_indices = find_peaks(
-        positions_axis,
-        height= detection_threshold,
-        distance= sample_distance,
-    )[0]
+        regressed_ball_state = get_regressed_state(
+            time_stamps, positions_window, polynomial_degree
+        )
 
-    return table_contact_indices
+        # Simulate the trajectory using the small model
+        # ball_state: x, y, z, vx, vy, vz
+        dt = time_stamps[i] - time_stamps[i - 1]
+        simulated_ball_state = step_ball_simulation(regressed_ball_state, dt)
 
+        # Calculate the Euclidean distance between the simulated trajectory and actual positions
+        distance = norm(simulated_ball_state[:3] - positions[i])
 
-def detect_rebounds() -> List[int]:
-    pass
+        # Determine the contact type based on the rebound distance and table height
+        if distance > detection_threshold:
+            contact_type = ContactType.RACKET
+        elif simulated_ball_state[2] > table_height:
+            contact_type = ContactType.TABLE
+        else:
+            contact_type = ContactType.UNKNOWN
 
-    # detect bounce indices
+        # Add the rebound index and contact type to the respective lists
+        contact_dict[i] = contact_type
+
+    return contact_dict
 
 
 def linear_table_contact(velocity_before_bounce):
@@ -60,20 +172,44 @@ def linear_table_contact(velocity_before_bounce):
     velocity_after_bounce = -velocity_after_bounce[2]
     return velocity_after_bounce
 
+
 def lineare_racket_contact(
-    velocity_before_bounce: Sequence[float], 
-    racket_orientation: Sequence[float]
+    velocity_before_bounce: Sequence[float], racket_orientation: Sequence[float]
 ):
     # assume no friction, point contact, no restitution, ball hits racket on flat surface,
     # surface is even
 
-
-    
     pass
 
 
+def compute_racket_orientation(joint_angles_rad):
+    quaternion = empty(4)
+    normal_vector = empty(3)
+
+    return quaternion, normal_vector
+
+
+def calculate_rebound_velocity(V_initial, R_orient, C_normal):
+    # Normalize vectors
+    V_initial = np.array(V_initial) / np.linalg.norm(V_initial)
+    C_normal = np.array(C_normal) / np.linalg.norm(C_normal)
+
+    # Convert racket orientation to a unit quaternion
+    R_quaternion = quat.from_float_array(R_orient)
+    R_quaternion = quat.as_quat_array(R_quaternion / np.linalg.norm(R_quaternion))
+
+    # Calculate reflection vector
+    R_reflection = V_initial - 2 * np.dot(V_initial, C_normal) * C_normal
+
+    # Transform reflection vector using quaternion rotation
+    R_global = quat.as_float_array(R_quaternion * quat.as_quat_array(R_reflection) * quat.conjugate(R_quaternion))
+
+    # Return the rebound velocity vector
+    return R_global.tolist()
+
+
+
 def check_difference_below_threshold(indices, threshold):
-    # Convert the list to a NumPy array for faster computations
     indices = array(indices)
 
     # Get the total number of elements
@@ -89,43 +225,41 @@ def check_difference_below_threshold(indices, threshold):
         if i < j:
             diff = abs(indices[i] - indices[j])
             if diff <= threshold:
-                warnings.warn(f"Combination values below threshold: {indices[i]}, {indices[j]}")
+                warnings.warn(
+                    f"Combination values below threshold: {indices[i]}, {indices[j]}"
+                )
                 return True
 
     # If no combination satisfies the condition, return False
     return False
 
+
 def velocity_regression(
     time_stamps: ndarray,
     positions: ndarray,
-    degree: int = 3,
-) -> Sequence[float]:
-    velocities = []
+    polynomial_degree: int = 3,
+) -> ndarray:
+    velocities = empty_like(positions)
+
+    position_polynomial = polynomial.Polynomial.fit(
+        time_stamps, positions, deg=polynomial_degree
+    )
+
+    velocity_polynomial = position_polynomial.deriv()
 
     for axis in range(3):
-        velocity = []
+        velocities[:, axis] = velocity_polynomial(time_stamps)
 
-        position_polynomial = polynomial.polynomial.Polynomial.fit(
-            time_stamps, positions[:, axis], deg=degree
-        )
-
-        velocity_polynomial = position_polynomial.deriv()
-
-        for t in time_stamps:
-            velocity.append(velocity_polynomial(t))
-
-        velocities.append(velocity)
-
-    return hstack(velocities)
+    return velocities
 
 
 def estimate(
     time_stamps: Sequence[float],
-    positions: Sequence[Sequence[float]], 
+    positions: Sequence[Sequence[float]],
     velocities: Sequence[Sequence[float]],
+    racket_orientation: Optional[Sequence[float]] = None,
     regression: bool = True,
     n_regression_samples: int = 10,
-    use_invertable_contact_model: bool = False,
     return_polar: bool = False,
 ):
     """Evaluates the effects of spin of a table tennis ball at rebound.
@@ -142,38 +276,47 @@ def estimate(
     time_stamps = array(time_stamps, copy=True)
     positions = array(positions, copy=True)
     velocities = array(velocities, copy=True)
-    
+
     # get all rebounds from trajectory and specify if table or racket
-    rebound_indices = detect_rebounds(positions)
+    contact_dict = detect_rebounds(positions)
+    rebound_indices = list(contact_dict.keys())
 
     check_difference_below_threshold(rebound_indices, n_regression_samples)
 
     # take velocity vector before bounce and after bounce
-    for index in rebound_indices:
+    for index, contact_type in contact_dict.items():
         if regression:
-            time_stamps_before_bounce = time_stamps[index-n_regression_samples:index]
-            positions_before_bounce = positions[index-n_regression_samples:index]
+            time_stamps_before_bounce = time_stamps[
+                index - n_regression_samples : index
+            ]
+            positions_before_bounce = positions[index - n_regression_samples : index]
 
-            vel_before_bounce = velocity_regression(time_stamps_before_bounce, positions_before_bounce)
+            vel_before_bounce = velocity_regression(
+                time_stamps_before_bounce, positions_before_bounce
+            )
             vel_before_bounce = vel_before_bounce[-1]
 
-            time_stamps_after_bounce = time_stamps[index+1: index+n_regression_samples]
-            positions_after_bounce = positions[index+1: index+n_regression_samples]
-            
-            vel_after_bounce = velocity_regression(time_stamps_after_bounce, positions_after_bounce)
+            time_stamps_after_bounce = time_stamps[
+                index + 1 : index + n_regression_samples
+            ]
+            positions_after_bounce = positions[index + 1 : index + n_regression_samples]
+
+            vel_after_bounce = velocity_regression(
+                time_stamps_after_bounce, positions_after_bounce
+            )
             vel_after_bounce = vel_after_bounce[0]
 
-        else:      
-            vel_before_bounce = velocities[index-1]
-            vel_after_bounce = velocities[index+1]
+        else:
+            vel_before_bounce = velocities[index - 1]
+            vel_after_bounce = velocities[index + 1]
 
-        # only works for table contacts...
-        # TODO: what to do with racket contacts? we need the racket orientation! 
-        # if contact_type == "table"
-        vel_after_bounce_no_spin = linear_table_contact(vel_before_bounce)
+        if ContactType.TABLE == contact_type:
+            vel_after_bounce_no_spin = linear_table_contact(vel_before_bounce)
 
-        # if contact_type == "racket"
-
+        if ContactType.RACKET == contact_type:
+            vel_after_bounce_no_spin = lineare_racket_contact(
+                vel_before_bounce, racket_orientation
+            )
 
         vel_diff = vel_after_bounce - vel_after_bounce_no_spin
 
