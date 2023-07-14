@@ -9,12 +9,14 @@ from numpy import (
     cross,
     empty,
     empty_like,
+    hstack,
     meshgrid,
     ndarray,
     pad,
     pi,
     polynomial,
     sqrt,
+    zeros,
 )
 from numpy.linalg import norm
 
@@ -25,86 +27,47 @@ class ContactType(Enum):
     UNKNOWN = "unknown"
 
 
-WINDOW_SIZE = 5
+WINDOW_SIZE = 10
 POLYNOMIAL_DEGREE = 1
 DETECTION_THRESHOLD = 0.15
 TABLE_PLANE_HEIGHT = 0.77
 TABLE_DETECTION_THRESHOLD = -0.03
 TABLE_DETECTION_SAMPLE_DISTANCE = 10
-SIMULATION_DELAY = 1
+SIMULATION_DELAY = 5
 
 
-def step_ball_simulation(ball_state, dt, integration_method: str = "euler_forward"):
+def step_ball_simulation(ball_state, dt):
     # Constants
-    rho = 1.2  # Air density
-    Cd = 0.5  # Drag coefficient
-    g = 9.8  # Acceleration due to gravity
-    r = 0.1  # Radius of the ball
-    m = 0.5  # Mass of the ball
+    rho = 1.18  # Air density
+    c_drag = 0.47016899  # Drag coefficient
+    c_lift = 1.46968343  # Magnus coefficient
+    g = 9.80801  # Acceleration due to gravity
+    r = 0.02  # Radius of the ball
+    m = 0.0027  # Mass of the ball
     A = pi * r**2  # Cross-sectional area of the ball
-    S = pi * r**2  # Reference area for the Magnus effect
 
-    # Unpack ball state
-    x, y, z, vx, vy, vz, omegax, omegay, omegaz = ball_state
+    k_magnus = 0.5 * rho * c_lift * A * r / m
+    k_drag = -0.5 * rho * c_drag * A / m
+    k_gravity = g
 
-    # Calculate the air resistance and Magnus force
-    v = sqrt(vx**2 + vy**2 + vz**2)
-    F_drag = -0.5 * Cd * rho * A * v * array([vx, vy, vz])
-    F_gravity = array([0, 0, -m * g])
-    F_magnus = (
-        0.5 * Cd * rho * S * cross(array([omegax, omegay, omegaz]), array([vx, vy, vz]))
-    )
+    # Step calculation
+    q = array(ball_state)
+    v = q[3:6]
+    omega = q[6:9]
 
-    # Calculate the acceleration and angular acceleration
-    a = (F_drag + F_gravity + F_magnus) / m
+    F_gravity = k_gravity * array([0, 0, -1])
+    F_drag = k_drag * norm(v) * v
+    F_magnus = k_magnus * cross(omega, v)
 
-    # Perform integration using the selected method
-    if integration_method == "semi_euler_forward":
-        ball_state += dt * array([vx, vy, vz, a[0], a[1], a[2], omegax, omegay, omegaz])
-    elif integration_method == "rk4":
-        k1 = dt * array([vx, vy, vz, a[0], a[1], a[2], omegax, omegay, omegaz])
-        k2 = dt * array(
-            [
-                vx + 0.5 * k1[3],
-                vy + 0.5 * k1[4],
-                vz + 0.5 * k1[5],
-                a[0],
-                a[1],
-                a[2],
-                omegax,
-                omegay,
-                omegaz,
-            ]
-        )
-        k3 = dt * array(
-            [
-                vx + 0.5 * k2[3],
-                vy + 0.5 * k2[4],
-                vz + 0.5 * k2[5],
-                a[0],
-                a[1],
-                a[2],
-                omegax,
-                omegay,
-                omegaz,
-            ]
-        )
-        k4 = dt * array(
-            [
-                vx + k3[3],
-                vy + k3[4],
-                vz + k3[5],
-                a[0],
-                a[1],
-                a[2],
-                omegax,
-                omegay,
-                omegaz,
-            ]
-        )
-        ball_state += (k1 + 2 * k2 + 2 * k3 + k4) / 6
+    # System dynamics
+    dv_dt = F_gravity + F_drag + F_magnus
 
-    return ball_state
+    domega_dt = zeros(3)
+    dq_dt = hstack((v, dv_dt, domega_dt))
+
+    q_next = q + dt * dq_dt
+
+    return q_next
 
 
 def get_regressed_state(
@@ -139,50 +102,51 @@ def get_regressed_state(
 def detect_rebounds(
     time_stamps: ndarray,
     positions: ndarray,
+    velocities: Optional[ndarray] = None,
     window_size: int = WINDOW_SIZE,
     polynomial_degree: int = POLYNOMIAL_DEGREE,
     detection_threshold: float = DETECTION_THRESHOLD,
     table_height: float = TABLE_PLANE_HEIGHT,
     simulation_sample_delay: int = SIMULATION_DELAY,
-    height_threshold: bool = False,
+    predictive_table_contact_detection: bool = False,
     return_states: bool = False,
 ) -> Union[List[int], Dict[int, ContactType]]:
     contact_dict = {}
-    regressed_ball_states = []
-    simulated_ball_states = []
+    ball_state_history = []
+    simulated_ball_state_history = []
     distances = []
 
     for i in range(window_size, len(positions) - simulation_sample_delay):
-        time_stamps_window = time_stamps[i - window_size : i - 1]
-        positions_window = positions[i - window_size : i - 1, :]
+        if velocities is not None:
+            ball_state = hstack((positions[i], velocities[i]))
+        else:
+            time_stamps_window = time_stamps[i - window_size : i]
+            positions_window = positions[i - window_size : i, :]
 
-        regressed_ball_state = get_regressed_state(
-            time_stamps_window, positions_window, polynomial_degree
-        )
+            ball_state = get_regressed_state(
+                time_stamps_window, positions_window, polynomial_degree
+            )
 
-        regressed_ball_state = pad(regressed_ball_state, (0, 3), mode="constant")
-        regressed_ball_states.append(regressed_ball_state)
+        ball_state = pad(ball_state, (0, 3), mode="constant")
+        ball_state_history.append(ball_state)
 
         # Simulate the trajectory using the small model
         # ball_state: x, y, z, vx, vy, vz
 
-        dt = time_stamps[i + simulation_sample_delay] - time_stamps[i - 1]
-        simulated_ball_state = step_ball_simulation(regressed_ball_state, dt)
-        simulated_ball_states.append(simulated_ball_state)
+        dt = time_stamps[i + simulation_sample_delay] - time_stamps[i]
 
-        if i % 50 == 0:
-            print(f"State at index {i}: {regressed_ball_state}")
+        simulated_ball_state = step_ball_simulation(ball_state, dt)
+        simulated_ball_state_history.append(simulated_ball_state)
 
         # Calculate the Euclidean distance between the simulated trajectory and actual positions
-        #if height_threshold:
-        #    distance = norm(
-        #        simulated_ball_state[2] - positions[i + simulation_sample_delay][2]
-        #    )
-        #else:
-
-        distance = norm(
-            simulated_ball_state[:2] - positions[i + simulation_sample_delay, :2]
-        )
+        if predictive_table_contact_detection:
+            distance = norm(
+                simulated_ball_state[:3] - positions[i + simulation_sample_delay, :3]
+            )
+        else:
+            distance = norm(
+                simulated_ball_state[:2] - positions[i + simulation_sample_delay, :2]
+            )
 
         distances.append(distance)
 
@@ -204,8 +168,8 @@ def detect_rebounds(
     if return_states:
         info = {}
 
-        info["regressed_ball_states"] = regressed_ball_states
-        info["simulated_ball_states"] = simulated_ball_states
+        info["ball_state_history"] = ball_state_history
+        info["simulated_ball_state_history"] = simulated_ball_state_history
         info["distances"] = distances
 
         return contact_dict, info
