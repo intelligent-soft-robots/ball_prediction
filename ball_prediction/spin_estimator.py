@@ -11,6 +11,7 @@ from numpy import (
     empty_like,
     meshgrid,
     ndarray,
+    pad,
     pi,
     polynomial,
     sqrt,
@@ -24,11 +25,13 @@ class ContactType(Enum):
     UNKNOWN = "unknown"
 
 
-POLYNOMIAL_DEGREE = 3
-DETECTION_THRESHOLD = 0.1
+WINDOW_SIZE = 5
+POLYNOMIAL_DEGREE = 1
+DETECTION_THRESHOLD = 0.15
 TABLE_PLANE_HEIGHT = 0.77
 TABLE_DETECTION_THRESHOLD = -0.03
 TABLE_DETECTION_SAMPLE_DISTANCE = 10
+SIMULATION_DELAY = 1
 
 
 def step_ball_simulation(ball_state, dt, integration_method: str = "euler_forward"):
@@ -108,13 +111,16 @@ def get_regressed_state(
     time_stamps: ndarray,
     positions: ndarray,
     polynomial_degree: int,
+    return_regression: bool = False,
 ):
     regressed_state = empty(6)
+    polynomials = []
 
     for axis in range(3):
         position_polynomial = polynomial.Polynomial.fit(
             time_stamps, positions[:, axis], deg=polynomial_degree
         )
+        polynomials.append(position_polynomial)
 
         regressed_state[axis] = position_polynomial(
             time_stamps[-1]
@@ -123,44 +129,86 @@ def get_regressed_state(
             time_stamps[-1]
         )  # Store last velocity
 
+    if return_regression:
+        info = {"polynomial": polynomials}
+        return regressed_state, info
+
     return regressed_state
 
 
 def detect_rebounds(
     time_stamps: ndarray,
     positions: ndarray,
-    window_size: int,
+    window_size: int = WINDOW_SIZE,
     polynomial_degree: int = POLYNOMIAL_DEGREE,
     detection_threshold: float = DETECTION_THRESHOLD,
     table_height: float = TABLE_PLANE_HEIGHT,
+    simulation_sample_delay: int = SIMULATION_DELAY,
+    height_threshold: bool = False,
+    return_states: bool = False,
 ) -> Union[List[int], Dict[int, ContactType]]:
     contact_dict = {}
+    regressed_ball_states = []
+    simulated_ball_states = []
+    distances = []
 
-    for i in range(window_size, len(positions)):
+    for i in range(window_size, len(positions) - simulation_sample_delay):
+        time_stamps_window = time_stamps[i - window_size : i - 1]
         positions_window = positions[i - window_size : i - 1, :]
 
         regressed_ball_state = get_regressed_state(
-            time_stamps, positions_window, polynomial_degree
+            time_stamps_window, positions_window, polynomial_degree
         )
+
+        regressed_ball_state = pad(regressed_ball_state, (0, 3), mode="constant")
+        regressed_ball_states.append(regressed_ball_state)
 
         # Simulate the trajectory using the small model
         # ball_state: x, y, z, vx, vy, vz
-        dt = time_stamps[i] - time_stamps[i - 1]
+
+        dt = time_stamps[i + simulation_sample_delay] - time_stamps[i - 1]
         simulated_ball_state = step_ball_simulation(regressed_ball_state, dt)
+        simulated_ball_states.append(simulated_ball_state)
+
+        if i % 50 == 0:
+            print(f"State at index {i}: {regressed_ball_state}")
 
         # Calculate the Euclidean distance between the simulated trajectory and actual positions
-        distance = norm(simulated_ball_state[:3] - positions[i])
+        #if height_threshold:
+        #    distance = norm(
+        #        simulated_ball_state[2] - positions[i + simulation_sample_delay][2]
+        #    )
+        #else:
+
+        distance = norm(
+            simulated_ball_state[:2] - positions[i + simulation_sample_delay, :2]
+        )
+
+        distances.append(distance)
 
         # Determine the contact type based on the rebound distance and table height
+        contact = False
+
         if distance > detection_threshold:
             contact_type = ContactType.RACKET
-        elif simulated_ball_state[2] > table_height:
-            contact_type = ContactType.TABLE
-        else:
-            contact_type = ContactType.UNKNOWN
+            contact = True
 
-        # Add the rebound index and contact type to the respective lists
-        contact_dict[i] = contact_type
+        if distance > detection_threshold and simulated_ball_state[2] < table_height:
+            contact_type = ContactType.TABLE
+            contact = True
+
+        if contact is True:
+            # Add the rebound index and contact type to the respective lists
+            contact_dict[i] = contact_type
+
+    if return_states:
+        info = {}
+
+        info["regressed_ball_states"] = regressed_ball_states
+        info["simulated_ball_states"] = simulated_ball_states
+        info["distances"] = distances
+
+        return contact_dict, info
 
     return contact_dict
 
@@ -178,8 +226,9 @@ def lineare_racket_contact(
 ):
     # assume no friction, point contact, no restitution, ball hits racket on flat surface,
     # surface is even
+    velocity_after_bounce = velocity_before_bounce
 
-    pass
+    return velocity_after_bounce
 
 
 def compute_racket_orientation(joint_angles_rad):
@@ -191,22 +240,23 @@ def compute_racket_orientation(joint_angles_rad):
 
 def calculate_rebound_velocity(V_initial, R_orient, C_normal):
     # Normalize vectors
-    V_initial = np.array(V_initial) / np.linalg.norm(V_initial)
-    C_normal = np.array(C_normal) / np.linalg.norm(C_normal)
+    V_initial = array(V_initial) / norm(V_initial)
+    C_normal = array(C_normal) / norm(C_normal)
 
     # Convert racket orientation to a unit quaternion
     R_quaternion = quat.from_float_array(R_orient)
-    R_quaternion = quat.as_quat_array(R_quaternion / np.linalg.norm(R_quaternion))
+    R_quaternion = quat.as_quat_array(R_quaternion / norm(R_quaternion))
 
     # Calculate reflection vector
     R_reflection = V_initial - 2 * np.dot(V_initial, C_normal) * C_normal
 
     # Transform reflection vector using quaternion rotation
-    R_global = quat.as_float_array(R_quaternion * quat.as_quat_array(R_reflection) * quat.conjugate(R_quaternion))
+    R_global = quat.as_float_array(
+        R_quaternion * quat.as_quat_array(R_reflection) * quat.conjugate(R_quaternion)
+    )
 
     # Return the rebound velocity vector
     return R_global.tolist()
-
 
 
 def check_difference_below_threshold(indices, threshold):
