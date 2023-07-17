@@ -19,6 +19,7 @@ from numpy import (
     zeros,
 )
 from numpy.linalg import norm
+from scipy.signal import find_peaks
 
 
 class ContactType(Enum):
@@ -29,9 +30,10 @@ class ContactType(Enum):
 
 WINDOW_SIZE = 10
 POLYNOMIAL_DEGREE = 1
-DETECTION_THRESHOLD = 0.15
+DETECTION_THRESHOLD = 0.10
+DETECTION_RANGE = 10
 TABLE_PLANE_HEIGHT = 0.77
-TABLE_DETECTION_THRESHOLD = -0.03
+TABLE_DETECTION_THRESHOLD = 0.10
 TABLE_DETECTION_SAMPLE_DISTANCE = 10
 SIMULATION_DELAY = 5
 
@@ -106,7 +108,9 @@ def detect_rebounds(
     window_size: int = WINDOW_SIZE,
     polynomial_degree: int = POLYNOMIAL_DEGREE,
     detection_threshold: float = DETECTION_THRESHOLD,
+    detection_range: int = DETECTION_RANGE,
     table_height: float = TABLE_PLANE_HEIGHT,
+    detection_threshold_table: float = TABLE_DETECTION_THRESHOLD,
     simulation_sample_delay: int = SIMULATION_DELAY,
     predictive_table_contact_detection: bool = False,
     return_states: bool = False,
@@ -114,7 +118,10 @@ def detect_rebounds(
     contact_dict = {}
     ball_state_history = []
     simulated_ball_state_history = []
-    distances = []
+
+    z_pred_errors = []
+    xy_pred_errors = []
+    total_pred_errors = []
 
     for i in range(window_size, len(positions) - simulation_sample_delay):
         if velocities is not None:
@@ -131,46 +138,67 @@ def detect_rebounds(
         ball_state_history.append(ball_state)
 
         # Simulate the trajectory using the small model
-        # ball_state: x, y, z, vx, vy, vz
-
         dt = time_stamps[i + simulation_sample_delay] - time_stamps[i]
 
         simulated_ball_state = step_ball_simulation(ball_state, dt)
         simulated_ball_state_history.append(simulated_ball_state)
 
         # Calculate the Euclidean distance between the simulated trajectory and actual positions
-        if predictive_table_contact_detection:
-            distance = norm(
-                simulated_ball_state[:3] - positions[i + simulation_sample_delay, :3]
-            )
-        else:
-            distance = norm(
-                simulated_ball_state[:2] - positions[i + simulation_sample_delay, :2]
-            )
+        xy_error = norm(
+            simulated_ball_state[:2] - positions[i + simulation_sample_delay, :2]
+        )
+        xy_pred_errors.append(xy_error)
 
-        distances.append(distance)
+        z_error = norm(
+            simulated_ball_state[2] - positions[i + simulation_sample_delay, 2]
+        )
+        z_pred_errors.append(z_error)
 
-        # Determine the contact type based on the rebound distance and table height
-        contact = False
+        total_error = norm(
+            simulated_ball_state[:3] - positions[i + simulation_sample_delay, :3]
+        )
+        total_pred_errors.append(total_error)
 
-        if distance > detection_threshold:
-            contact_type = ContactType.RACKET
-            contact = True
+    xy_pred_errors = array(xy_pred_errors)
+    z_pred_errors = array(z_pred_errors)
+    total_pred_errors = array(total_pred_errors)
 
-        if distance > detection_threshold and simulated_ball_state[2] < table_height:
-            contact_type = ContactType.TABLE
-            contact = True
+    # Find peaks in the predicted errors between data and simulation
+    contact_indices_racket = find_peaks(
+        xy_pred_errors, height=detection_threshold, distance=detection_range
+    )[0]
+    contact_indices_racket = [i+window_size for i in contact_indices_racket]
 
-        if contact is True:
-            # Add the rebound index and contact type to the respective lists
-            contact_dict[i] = contact_type
+    if predictive_table_contact_detection:
+        positions -= table_height
+        positions *= -1
+
+        contact_indices_table = find_peaks(
+            positions, height=detection_threshold_table, distance=detection_range
+        )[0]
+    else:
+        contact_indices_table = find_peaks(
+            z_pred_errors, height=detection_threshold, distance=detection_range
+        )[0]
+        contact_indices_table = [i+window_size for i in contact_indices_table]
+
+    # Assign contact indices to contact dict
+    for index in contact_indices_racket:
+        contact_type = ContactType.RACKET
+        contact_dict[index] = contact_type
+
+    for index in contact_indices_table:
+        contact_type = ContactType.TABLE
+        contact_dict[index] = contact_type
 
     if return_states:
         info = {}
 
         info["ball_state_history"] = ball_state_history
         info["simulated_ball_state_history"] = simulated_ball_state_history
-        info["distances"] = distances
+        info["xy_pred_errors"] = xy_pred_errors
+        info["z_pred_errors"] = z_pred_errors
+        info["total_pred_errors"] = total_pred_errors
 
         return contact_dict, info
 
@@ -292,7 +320,7 @@ def estimate(
     velocities = array(velocities, copy=True)
 
     # get all rebounds from trajectory and specify if table or racket
-    contact_dict = detect_rebounds(positions)
+    contact_dict = detect_rebounds(time_stamps, positions)
     rebound_indices = list(contact_dict.keys())
 
     check_difference_below_threshold(rebound_indices, n_regression_samples)

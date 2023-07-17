@@ -4,8 +4,10 @@ from numpy import arange, array, convolve, linspace, ones
 from scipy.signal import savgol_filter
 
 from ball_prediction.spin_estimator import (
+    DETECTION_THRESHOLD,
     SIMULATION_DELAY,
     WINDOW_SIZE,
+    ContactType,
     detect_rebounds,
     get_regressed_state,
     step_ball_simulation,
@@ -134,17 +136,8 @@ def rebound_visualisation():
 
     regressed_states = info["ball_state_history"]
     simulated_states = info["simulated_ball_state_history"]
-    distances = info["distances"]
-
-    contact_dict, info = detect_rebounds(
-        time_stamps=ball_time_stamps,
-        positions=ball_positions,
-        # velocities=ball_velocities,
-        return_states=True,
-        predictive_table_contact_detection=True,
-    )
-
-    distances_table = info["distances"]
+    distances = info["xy_pred_errors"]
+    distances_table = info["z_pred_errors"]
 
     regressed_states = array(regressed_states)
     simulated_states = array(simulated_states)
@@ -188,6 +181,28 @@ def rebound_visualisation():
             label="simulated",
         )
 
+    for ax in axs:
+        for index, contact_type in contact_dict.items():
+            if contact_type == ContactType.RACKET:
+                racket_color = "#17c7d0"
+                ax.axvline(
+                    ball_time_stamps[index],
+                    color=racket_color,
+                    linestyle="-",
+                    alpha=0.5,
+                    label="Racket Contact",
+                )
+
+            if contact_type == ContactType.TABLE:
+                table_color = "#46b361"
+                ax.axvline(
+                    ball_time_stamps[index],
+                    color=table_color,
+                    linestyle="-",
+                    alpha=0.5,
+                    label="Table Contact",
+                )
+
         axs[i].legend()
         axs[i + 3].legend()
 
@@ -197,7 +212,7 @@ def rebound_visualisation():
         distances,
         alpha=1.0,
         c="#0193d7",
-        label="without z distances",
+        label="pred. error xy",
         s=marker_size,
     )
     axs[-1].scatter(
@@ -205,8 +220,19 @@ def rebound_visualisation():
         distances_table,
         alpha=0.5,
         c="#CF5369",
-        label="with z distances",
+        label="pred. error z",
         s=marker_size,
+    )
+
+    axs[-1].axhline(DETECTION_THRESHOLD, color="r", alpha=0.5)
+    axs[-1].text(
+        ball_time_stamps[-SIMULATION_DELAY],
+        DETECTION_THRESHOLD,
+        "Detection Threshold",
+        horizontalalignment="right",
+        verticalalignment="bottom",
+        color="r",
+        fontsize=8,
     )
 
     axs[-1].legend()
@@ -223,7 +249,8 @@ def compare_poly_degrees_visualisation():
     ball_positions = array(ball_positions)
 
     degrees = [1, 2, 3, 4, 5]
-    distances_poly = []
+    distances_windows_table = []
+    distances_windows_racket = []
 
     for deg in degrees:
         contact_dict, info = detect_rebounds(
@@ -234,7 +261,8 @@ def compare_poly_degrees_visualisation():
             return_states=True,
         )
 
-        distances_poly.append(info["distances"])
+        distances_windows_table.append(info["z_pred_errors"])
+        distances_windows_racket.append(info["xy_pred_errors"])
 
     # Plot regressed states
     colors = [
@@ -246,7 +274,6 @@ def compare_poly_degrees_visualisation():
         "#17c7d0",
         "#777777",
     ]
-    
 
     n_plots = len(degrees) + 3
     fig, axs = plt.subplots(n_plots, sharex=True, constrained_layout=True)
@@ -258,11 +285,24 @@ def compare_poly_degrees_visualisation():
 
     axs[3].set_title("Distances of predicted to actual position")
 
-    for i, distances in enumerate(distances_poly):
+    for i, distances in enumerate(distances_windows_table):
         axs[i + 3].scatter(
             ball_time_stamps[WINDOW_SIZE:-SIMULATION_DELAY],
             distances,
             c=colors[i],
+            alpha=0.9,
+            marker=".",
+            label="Table",
+        )
+
+    for i, distances in enumerate(distances_windows_racket):
+        axs[i + 3].scatter(
+            ball_time_stamps[WINDOW_SIZE:-SIMULATION_DELAY],
+            distances,
+            c=colors[i],
+            marker="x",
+            alpha=0.6,
+            label="Racket",
         )
 
     y_labels = ["x", "y", "z"]
@@ -271,16 +311,22 @@ def compare_poly_degrees_visualisation():
     for i in range(3):
         axs[i].set_ylabel(y_labels[i])
 
-    for i in range(n_plots-3):
-        ax = axs[i+3]
+    for i in range(n_plots - 3):
+        ax = axs[i + 3]
         ax.set_ylabel(r"$\Delta d_{pred}$")
         ax_right = ax.twinx()
-        ax_right.set_ylabel(y_labels[i+3], rotation='horizontal', labelpad=35, va="center", ha="center")
+        ax_right.set_ylabel(
+            y_labels[i + 3],
+            rotation="horizontal",
+            labelpad=35,
+            va="center",
+            ha="center",
+        )
 
     axs[-1].set_xlabel("Time t [s]")
     fig.align_ylabels()
 
-    
+
 def compare_windows_visualisation():
     marker_size = 1.25
     index = str(INDEX)
@@ -292,7 +338,8 @@ def compare_windows_visualisation():
     ball_positions = array(ball_positions)
 
     windows = [3, 5, 10, 20, 30, 50]
-    distances_windows = []
+    distances_windows_table = []
+    distances_windows_racket = []
 
     for window in windows:
         contact_dict, info = detect_rebounds(
@@ -303,7 +350,8 @@ def compare_windows_visualisation():
             return_states=True,
         )
 
-        distances_windows.append(info["distances"])
+        distances_windows_table.append(info["z_pred_errors"])
+        distances_windows_racket.append(info["xy_pred_errors"])
 
     # Plot regressed states
     colors = [
@@ -315,7 +363,6 @@ def compare_windows_visualisation():
         "#17c7d0",
         "#777777",
     ]
-    
 
     n_plots = len(windows) + 3
     fig, axs = plt.subplots(n_plots, sharex=True, constrained_layout=True)
@@ -327,11 +374,24 @@ def compare_windows_visualisation():
 
     axs[3].set_title("Distances of predicted to actual position")
 
-    for i, distances in enumerate(distances_windows):
+    for i, distances in enumerate(distances_windows_table):
         axs[i + 3].scatter(
-            ball_time_stamps[windows[i]:-SIMULATION_DELAY],
+            ball_time_stamps[windows[i] : -SIMULATION_DELAY],
             distances,
             c=colors[i],
+            alpha=0.9,
+            marker=".",
+            label="Table",
+        )
+
+    for i, distances in enumerate(distances_windows_racket):
+        axs[i + 3].scatter(
+            ball_time_stamps[windows[i] : -SIMULATION_DELAY],
+            distances,
+            c=colors[i],
+            marker="x",
+            alpha=0.6,
+            label="Racket",
         )
 
     y_labels = ["x", "y", "z"]
@@ -340,11 +400,17 @@ def compare_windows_visualisation():
     for i in range(3):
         axs[i].set_ylabel(y_labels[i])
 
-    for i in range(n_plots-3):
-        ax = axs[i+3]
+    for i in range(n_plots - 3):
+        ax = axs[i + 3]
         ax.set_ylabel(r"$\Delta d_{pred}$")
         ax_right = ax.twinx()
-        ax_right.set_ylabel(y_labels[i+3], rotation='horizontal', labelpad=35, va="center", ha="center")
+        ax_right.set_ylabel(
+            y_labels[i + 3],
+            rotation="horizontal",
+            labelpad=35,
+            va="center",
+            ha="center",
+        )
 
     axs[-1].set_xlabel("Time t [s]")
     fig.align_ylabels()
@@ -389,7 +455,7 @@ if __name__ == "__main__":
     # velocity_regression_visualisation()
     rebound_visualisation()
     # test_ball_simulation()
-    compare_poly_degrees_visualisation()
-    compare_windows_visualisation()
+    # compare_poly_degrees_visualisation()
+    # compare_windows_visualisation()
 
     plt.show()
