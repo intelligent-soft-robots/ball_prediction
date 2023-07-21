@@ -167,20 +167,22 @@ def detect_rebounds(
     contact_indices_racket = find_peaks(
         xy_pred_errors, height=detection_threshold, distance=detection_range
     )[0]
-    contact_indices_racket = [i+window_size for i in contact_indices_racket]
+    contact_indices_racket = [i + window_size for i in contact_indices_racket]
 
     if predictive_table_contact_detection:
-        positions -= table_height
-        positions *= -1
+        positions_inv = positions - table_height
+        positions_inv *= -1
 
         contact_indices_table = find_peaks(
-            positions, height=detection_threshold_table, distance=detection_range
+            positions_inv[:, 2],
+            height=detection_threshold_table,
+            distance=detection_range,
         )[0]
     else:
         contact_indices_table = find_peaks(
             z_pred_errors, height=detection_threshold, distance=detection_range
         )[0]
-        contact_indices_table = [i+window_size for i in contact_indices_table]
+        contact_indices_table = [i + window_size for i in contact_indices_table]
 
     # Assign contact indices to contact dict
     for index in contact_indices_racket:

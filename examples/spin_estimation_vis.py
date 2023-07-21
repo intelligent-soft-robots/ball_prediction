@@ -335,6 +335,8 @@ def compare_windows_visualisation():
 
     ball_time_stamps = collection[index]["ball_time_stamps"]
     ball_positions = collection[index]["ball_positions"]
+
+    ball_time_stamps = array(ball_time_stamps)
     ball_positions = array(ball_positions)
 
     windows = [3, 5, 10, 20, 30, 50]
@@ -455,7 +457,7 @@ if __name__ == "__main__":
     # velocity_regression_visualisation()
     rebound_visualisation()
     # test_ball_simulation()
-    # compare_poly_degrees_visualisation()
-    # compare_windows_visualisation()
+    compare_poly_degrees_visualisation()
+    compare_windows_visualisation()
 
     plt.show()
