@@ -1,6 +1,7 @@
 import h5py
 import matplotlib.pyplot as plt
-from numpy import arange, array, convolve, linspace, ones
+from numpy import arange, array, convolve, linspace, ones, sort
+from numpy.random import randint
 from scipy.signal import savgol_filter
 
 from ball_prediction.spin_estimator import (
@@ -62,8 +63,6 @@ def visualize_data():
         axs[i].scatter(ball_time_stamps, ball_positions[:, i], s=marker_size)
         axs[i + 3].scatter(ball_time_stamps, ball_velocities[:, i], s=marker_size)
 
-    plt.show()
-
 
 def velocity_regression_visualisation():
     marker_size = 1.25
@@ -89,7 +88,7 @@ def velocity_regression_visualisation():
             start_regression : start_regression + regression_window, :
         ],
         polynomial_degree=3,
-        return_regression=True,
+        return_info=True,
     )
 
     print(
@@ -452,12 +451,50 @@ def load_data():
     return collection
 
 
+def test_indicies_compare():
+    from ball_prediction.spin_estimator import check_difference_below_threshold
+    
+    threshold = 5
+    n_runs = 100
+    
+    for i in range(n_runs):
+        rebounds_indices = randint(0, 200, (5,))
+        
+        rebounds_indices = sort(rebounds_indices)
+
+        if check_difference_below_threshold(rebounds_indices, threshold=threshold):
+            print(f"Difference to small: {rebounds_indices}")
+
+
+def test_spin_estimator():
+    from ball_prediction.spin_estimator import estimate
+    
+    index = str(INDEX)
+
+    collection = load_data()
+
+    ball_time_stamps = collection[index]["ball_time_stamps"]
+    ball_positions = collection[index]["ball_positions"]
+
+    ball_time_stamps = array(ball_time_stamps)
+    ball_positions = array(ball_positions)
+    
+    output = estimate(ball_time_stamps, ball_positions)
+    
+    print(output)
+    
+    
+    
+
 if __name__ == "__main__":
     # visualize_data()
-    # velocity_regression_visualisation()
+    velocity_regression_visualisation()
     rebound_visualisation()
     # test_ball_simulation()
     compare_poly_degrees_visualisation()
     compare_windows_visualisation()
+    
+    # test_indicies_compare()
+    # test_spin_estimator()
 
     plt.show()
