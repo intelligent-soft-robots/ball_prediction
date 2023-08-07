@@ -1,6 +1,7 @@
 import h5py
 import matplotlib.pyplot as plt
 from numpy import arange, array, convolve, linspace, ones, sort
+from numpy.linalg import norm
 from numpy.random import randint
 from scipy.signal import savgol_filter
 
@@ -612,7 +613,7 @@ def visualize_regressed_velocity_vectors():
     marker_size = 1.25
     index = str(INDEX)
     
-    arrow_length = 0.15
+    arrow_length = 0.01
     idx_delta = 2
 
     collection = load_data()
@@ -628,21 +629,25 @@ def visualize_regressed_velocity_vectors():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     
-    ax.scatter(ball_positions[:, 0], ball_positions[:, 1], ball_positions[:, 2])
+    ax.scatter(ball_positions[:, 0], ball_positions[:, 1], ball_positions[:, 2], s=marker_size, alpha=0.5)
     
     for key, value in contact_dict.items():
         idx_before = key - idx_delta
         pos_x, pos_y, pos_z = ball_positions[idx_before]
         vel_x, vel_y, vel_z = ball_velocities[idx_before]
+        v_mag = norm(ball_velocities[idx_before])
+        
         ax.quiver(pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
-                length=arrow_length, color='red', label=f'Velocity before')
+                length=arrow_length*v_mag, color='red', label=f'Velocity before')
 
 
         idx_after = key + idx_delta
         pos_x, pos_y, pos_z = ball_positions[idx_after]
         vel_x, vel_y, vel_z = ball_velocities[idx_after]
+        v_mag = norm(ball_velocities[idx_after])
+        
         ax.quiver(pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
-                length=arrow_length, color='green', label=f'Velocity after')
+                length=arrow_length*v_mag, color='green', label=f'Velocity after')
         
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
