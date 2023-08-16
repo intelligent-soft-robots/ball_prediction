@@ -199,6 +199,13 @@ if __name__ == "__main__":
     input_dim = inputs.shape[1]  # Dimension of input data
     output_dim = targets.shape[1]  # Dimension of output data
 
-    model = MLP(input_dim, output_dim, hidden_neurons, use_layer_norm, dropout_rate)
+    model = ReboundModel(input_dim, output_dim, hidden_neurons, use_layer_norm, dropout_rate)
     trainer = DNNTraining(model, num_epochs, learning_rate)
     trainer.train(inputs, targets)
+
+    # Save the trained model and training state
+    save_dir = 'saved_model'
+    trainer.save(save_dir)
+
+    # Load the trained model and training state
+    loaded_trainer = PINNTraining.load(save_dir, ReboundModel)
