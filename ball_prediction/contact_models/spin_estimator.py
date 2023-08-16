@@ -1,12 +1,13 @@
+import logging
 import warnings
 from enum import Enum
-import logging
 from typing import Dict, List, Optional, Sequence, Union
 
 from numpy import (
     abs,
     arctan2,
     array,
+    cos,
     cross,
     empty,
     empty_like,
@@ -16,10 +17,9 @@ from numpy import (
     pad,
     pi,
     polynomial,
+    sin,
     sqrt,
     zeros,
-    sin,
-    cos,
 )
 from numpy.linalg import norm
 from scipy.signal import find_peaks

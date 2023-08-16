@@ -11,9 +11,9 @@ from ball_prediction.ball_prediction.contact_models.spin_estimator import (
     WINDOW_SIZE,
     ContactType,
     detect_rebounds,
+    filter_rebounds,
     get_regressed_state,
     step_ball_simulation,
-    filter_rebounds,
 )
 
 FILE_PATH = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/examples/data/ball_trajectories_with_return.hdf5"
@@ -476,7 +476,9 @@ def load_data():
 
 
 def test_indicies_compare():
-    from ball_prediction.ball_prediction.contact_models.spin_estimator import check_difference_below_threshold
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import (
+        check_difference_below_threshold,
+    )
 
     threshold = 5
     n_runs = 100
@@ -688,7 +690,9 @@ def test_orientation_calculation():
     import numpy as np
     from scipy.spatial.transform import Rotation
 
-    from ball_prediction.ball_prediction.contact_models.spin_estimator import compute_racket_orientation
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import (
+        compute_racket_orientation,
+    )
 
     np.set_printoptions(suppress=True)
     pi = math.pi
@@ -775,7 +779,9 @@ def test_orientation_calculation_homogenous():
     import numpy as np
     from scipy.spatial.transform import Rotation
 
-    from ball_prediction.ball_prediction.contact_models.spin_estimator import compute_racket_orientation
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import (
+        compute_racket_orientation,
+    )
 
     np.set_printoptions(suppress=True)
     pi = math.pi

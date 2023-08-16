@@ -1,8 +1,9 @@
 import pathlib
+
 import h5py
-import tomlkit
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import tomlkit
 
 FILE_PATH = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/examples/data/ball_trajectories_with_return.hdf5"
 INDEX = 59  # clean sample at 59
@@ -150,9 +151,9 @@ def compute_magnus():
 
 def magnus_regressor_test():
     from ball_prediction.ball_prediction.contact_models.magnus_regressor import (
-        MagnusRegressor,
-        REGRESS_CFG,
         PHYSICS_CFG,
+        REGRESS_CFG,
+        MagnusRegressor,
     )
 
     regressor = MagnusRegressor(REGRESS_CFG, PHYSICS_CFG)

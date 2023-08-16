@@ -7,28 +7,29 @@ from typing import Any, Sequence
 import numpy as np
 import numpy.typing as npt
 
+
 class BaseTableContact(ABC):
     def __init__(self) -> None:
         raise NotImplementedError
-    
+
     def forward(q: Sequence[float]) -> Sequence[float]:
         pass
-    
+
 
 class Hayakawa2021TableContact(BaseTableContact):
     """
     Source:
-    Hayakawa, Yoshikazu, et al. 
-    "Ball trajectory planning in serving task for 
-    table tennis robot." 
-    SICE Journal of Control, Measurement, 
+    Hayakawa, Yoshikazu, et al.
+    "Ball trajectory planning in serving task for
+    table tennis robot."
+    SICE Journal of Control, Measurement,
     and System Integration 9.2 (2016): 50-59.
-    
+
     URL:
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.9.50
 
-    Racket Rebound Model:   True 
-    
+    Racket Rebound Model:   True
+
     Approach:
     =============================
     Analytic model:         False
@@ -37,7 +38,7 @@ class Hayakawa2021TableContact(BaseTableContact):
     Linear model:           True
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   True
@@ -47,42 +48,38 @@ class Hayakawa2021TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
-    
+
     def __init__(self) -> None:
         pass
-        
+
     def forward(self, q) -> npt.NDArray:
-        T = np.array(
-            [[]
-            ]
-        )
-        
+        T = np.array([[]])
+
         return q
-        
 
 
 class Nakashima2014TableContact(BaseTableContact):
     """
     Source:
-    Nakashima, Akira, Daigo Ito, and Yoshikazu Hayakawa. 
-    "An online trajectory planning of struck ball with spin 
-    by table tennis robot." 
-    2014 IEEE/ASME International Conference on Advanced 
+    Nakashima, Akira, Daigo Ito, and Yoshikazu Hayakawa.
+    "An online trajectory planning of struck ball with spin
+    by table tennis robot."
+    2014 IEEE/ASME International Conference on Advanced
     Intelligent Mechatronics. IEEE, 2014.
 
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6878188
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -91,7 +88,7 @@ class Nakashima2014TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -101,35 +98,35 @@ class Nakashima2014TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
-    
+
     def __init__(self) -> None:
         pass
-        
+
     def forward():
         pass
-    
-    
+
+
 class Nakashima2010TableContact(BaseTableContact):
     """
     Source:
-    Nakashima, Akira, et al. 
-    "Modeling of rebound phenomenon of a rigid ball with 
-    friction and elastic effects." 
+    Nakashima, Akira, et al.
+    "Modeling of rebound phenomenon of a rigid ball with
+    friction and elastic effects."
     Proceedings of the 2010 American Control Conference.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5530520
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -138,7 +135,7 @@ class Nakashima2010TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -148,36 +145,36 @@ class Nakashima2010TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
-    
+
     def __init__(self) -> None:
         pass
-        
+
     def forward():
         pass
-    
-    
+
+
 class Zhao2016TableContact(BaseTableContact):
     """
     Source:
-    Zhao, Yongsheng, Rong Xiong, and Yifeng Zhang. 
-    "Rebound modeling of spinning ping-pong ball based on 
-    multiple visual measurements." 
-    IEEE Transactions on Instrumentation 
+    Zhao, Yongsheng, Rong Xiong, and Yifeng Zhang.
+    "Rebound modeling of spinning ping-pong ball based on
+    multiple visual measurements."
+    IEEE Transactions on Instrumentation
     and Measurement 65.8 (2016): 1836-1846.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7469824
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -186,7 +183,7 @@ class Zhao2016TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -196,35 +193,36 @@ class Zhao2016TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward():
         pass
-    
-    
+
+
 class Huang2011TableContact(BaseTableContact):
     """
     Source:
-    Huang, Yanlong, et al. 
-    "Trajectory prediction of spinning ball for ping-pong 
-    player robot." 
-    2011 IEEE/RSJ International Conference on Intelligent 
+    Huang, Yanlong, et al.
+    "Trajectory prediction of spinning ball for ping-pong
+    player robot."
+    2011 IEEE/RSJ International Conference on Intelligent
     Robots and Systems.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6095044
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -233,7 +231,7 @@ class Huang2011TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -243,17 +241,18 @@ class Huang2011TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -261,17 +260,17 @@ class Huang2011TableContact(BaseTableContact):
 class Bao2012TableContact(BaseTableContact):
     """
     Source:
-    Bao, Han, et al. 
-    "Bouncing model for the table tennis trajectory prediction 
-    and the strategy of hitting the ball." 
+    Bao, Han, et al.
+    "Bouncing model for the table tennis trajectory prediction
+    and the strategy of hitting the ball."
     2012 IEEE International Conference on Mechatronics and
     Automation.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6285129
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -280,7 +279,7 @@ class Bao2012TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -290,17 +289,18 @@ class Bao2012TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -308,17 +308,17 @@ class Bao2012TableContact(BaseTableContact):
 class Liu2012TableContact(BaseTableContact):
     """
     Source:
-    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima. 
-    "Racket control and its experiments for robot playing 
-    table tennis." 
-    2012 IEEE International Conference on Robotics and 
+    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
+    "Racket control and its experiments for robot playing
+    table tennis."
+    2012 IEEE International Conference on Robotics and
     Biomimetics (ROBIO).
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6490973
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -327,7 +327,7 @@ class Liu2012TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -337,34 +337,35 @@ class Liu2012TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
-    
-    
+
+
 class Liu2013TableContact(BaseTableContact):
     """
     Source:
-    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima. 
-    "Racket control for a table tennis robot to return a ball." 
-    SICE Journal of Control, Measurement, and System 
+    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
+    "Racket control for a table tennis robot to return a ball."
+    SICE Journal of Control, Measurement, and System
     Integration 6.4 (2013): 259-266.
-    
+
     URL:
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.6.259
-    
-    Racket Rebound Model:   False 
-    
+
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -373,7 +374,7 @@ class Liu2013TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -383,34 +384,35 @@ class Liu2013TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
-    
-    
+
+
 class Nonomura2010TableContact(BaseTableContact):
     """
     Source:
-    Nonomura, Junko, Akira Nakashima, and Yoshikazu Hayakawa. 
-    "Analysis of effects of rebounds and aerodynamics for 
-    trajectory of table tennis ball." 
-    Proceedings of SICE Annual Conference 2010. 
-    
+    Nonomura, Junko, Akira Nakashima, and Yoshikazu Hayakawa.
+    "Analysis of effects of rebounds and aerodynamics for
+    trajectory of table tennis ball."
+    Proceedings of SICE Annual Conference 2010.
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5603024
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -419,7 +421,7 @@ class Nonomura2010TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -429,35 +431,36 @@ class Nonomura2010TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
-    
+
 
 class Zhang2010TableContactModel(BaseTableContact):
     """
     Source:
-    Zhang, Zhengtao, De Xu, and Min Tan. 
-    "Visual measurement and prediction of ball trajectory for 
-    table tennis robot." 
-    IEEE Transactions on Instrumentation and Measurement 
+    Zhang, Zhengtao, De Xu, and Min Tan.
+    "Visual measurement and prediction of ball trajectory for
+    table tennis robot."
+    IEEE Transactions on Instrumentation and Measurement
     59.12 (2010): 3195-3205.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5454397
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -466,7 +469,7 @@ class Zhang2010TableContactModel(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -476,17 +479,18 @@ class Zhang2010TableContactModel(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact ((abc): BaseTableContact default 
+        BaseTableContact ((abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -494,17 +498,17 @@ class Zhang2010TableContactModel(BaseTableContact):
 class ZZhang2010TableContactModel(BaseTableContact):
     """
     Source:
-    Zhang, Zhengtao, De Xu, and Ping Yang. 
-    "Rebound model of table tennis ball for trajectory 
-    prediction." 
-    2010 IEEE International Conference on Robotics 
+    Zhang, Zhengtao, De Xu, and Ping Yang.
+    "Rebound model of table tennis ball for trajectory
+    prediction."
+    2010 IEEE International Conference on Robotics
     and Biomimetics. IEEE, 2010
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5723356
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -513,7 +517,7 @@ class ZZhang2010TableContactModel(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -523,35 +527,36 @@ class ZZhang2010TableContactModel(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact ((abc): BaseTableContact default 
+        BaseTableContact ((abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
-  
+
 class Zhang2014TableContact(BaseTableContact):
     """
     Source:
-    Zhang, Yifeng, et al. 
-    "Spin observation and trajectory prediction of a 
-    ping-pong ball." 
-    2014 IEEE international conference on robotics and 
+    Zhang, Yifeng, et al.
+    "Spin observation and trajectory prediction of a
+    ping-pong ball."
+    2014 IEEE international conference on robotics and
     automation (ICRA).
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6907456
 
-    Racket Rebound Model:   False 
-    
+    Racket Rebound Model:   False
+
     Approach:
     =============================
     Analytic model:         False
@@ -560,7 +565,7 @@ class Zhang2014TableContact(BaseTableContact):
     Linear model:           False
     FEM:                    False
     Spring-Damper-Model:    False
-    
+
     Effects considered:
     =============================
     Spin:                   False
@@ -570,17 +575,18 @@ class Zhang2014TableContact(BaseTableContact):
     Surface Unevenness:     False
     Point Contact:          False
     Surface Contact:        False
-    
+
     Other assumptions or restrictions:
     -
-    
+
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -588,27 +594,28 @@ class Zhang2014TableContact(BaseTableContact):
 class MuJoCo2012TableContact(BaseTableContact):
     """
     Use MuJoCo simulation as baseline.
-    
+
     Source
-    Todrov, Emanuel, Tom Erez, and Yuval Tassa. 
+    Todrov, Emanuel, Tom Erez, and Yuval Tassa.
     "Mujoco: A physics engine for model-based control."
-    2012 IEEE/RSJ international conference on intelligent 
+    2012 IEEE/RSJ international conference on intelligent
     robots and systems. IEEE, 2012.
-    
+
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6386109
 
     Args:
-        BaseTableContact (abc): BaseTableContact default 
+        BaseTableContact (abc): BaseTableContact default
         class.
     """
+
     pass
 
 
 class AnalyticTableContact(BaseTableContact):
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -616,7 +623,7 @@ class AnalyticTableContact(BaseTableContact):
 class MLPTableContact(BaseTableContact):
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -624,7 +631,7 @@ class MLPTableContact(BaseTableContact):
 class GPTableContact(BaseTableContact):
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
 
@@ -632,7 +639,6 @@ class GPTableContact(BaseTableContact):
 class ResTableContact(BaseTableContact):
     def __init__(self) -> None:
         pass
-    
+
     def forward(self):
         pass
-    
