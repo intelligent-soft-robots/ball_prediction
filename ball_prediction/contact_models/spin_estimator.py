@@ -298,15 +298,15 @@ def filter_rebounds(
     time_stamps: Optional[Sequence[float]] = None,
     index_threshold: int = 10,
     time_threshold: float = 0.1,
-    time_filter_stamp_range = 5,
+    time_filter_stamp_range=5,
 ):
     filtered_contact_dict = contact_dict.copy()
-    
+
     print(f"Contact dict: {filtered_contact_dict}")
-    
+
     # remove rebound from index if there is less then threshold measurement samples before and after
     keys_to_remove = []
-    
+
     for key, value in filtered_contact_dict.items():
         print(key)
         # Samples below threshold are removed. At the border of the ball tracking system often noisy
@@ -314,33 +314,33 @@ def filter_rebounds(
         if key < index_threshold:
             keys_to_remove.append(key)
             continue
-            
+
         # Samples above threshold are removed. At the border of the ball tracking system often noisy
         # samples can be found.
         if key > len(time_stamps) - index_threshold:
             keys_to_remove.append(key)
             continue
-        
+
         # Check if there is a sudden time jump which resulted in a false detected ball contact.
         # There should be no large gap and therefore the sample time stamps before and after should be
         # smaller the the given time threshold. We assume 200Hz sampling. So 5 samples should be
-        # collected in 0.025 s. 
+        # collected in 0.025 s.
         contact_ts = time_stamps[key]
         contact_ts_lower = time_stamps[key - time_filter_stamp_range]
         contact_ts_upper = time_stamps[key + time_filter_stamp_range]
-        
+
         if contact_ts - contact_ts_lower > time_threshold:
             keys_to_remove.append(key)
             continue
-        
+
         if contact_ts_upper - contact_ts > time_threshold:
             keys_to_remove.append(key)
             continue
-    
+
     print(keys_to_remove)
     for key in keys_to_remove:
         del filtered_contact_dict[key]
-    
+
     return filtered_contact_dict
 
 

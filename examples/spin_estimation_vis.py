@@ -5,7 +5,7 @@ from numpy.linalg import norm
 from numpy.random import randint
 from scipy.signal import savgol_filter
 
-from ball_prediction.spin_estimator import (
+from ball_prediction.ball_prediction.contact_models.spin_estimator import (
     DETECTION_THRESHOLD,
     SIMULATION_DELAY,
     WINDOW_SIZE,
@@ -476,7 +476,7 @@ def load_data():
 
 
 def test_indicies_compare():
-    from ball_prediction.spin_estimator import check_difference_below_threshold
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import check_difference_below_threshold
 
     threshold = 5
     n_runs = 100
@@ -491,7 +491,7 @@ def test_indicies_compare():
 
 
 def test_spin_estimator():
-    from ball_prediction.spin_estimator import estimate
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import estimate
 
     index = str(INDEX)
 
@@ -521,12 +521,14 @@ def test_contact_dict_filter():
     contact_dict, info = detect_rebounds(
         time_stamps=ball_time_stamps, positions=ball_positions, return_states=True
     )
-    
-    filtered_contact_dict = filter_rebounds(contact_dict, ball_time_stamps, time_threshold=0.05, time_filter_stamp_range=5)
+
+    filtered_contact_dict = filter_rebounds(
+        contact_dict, ball_time_stamps, time_threshold=0.05, time_filter_stamp_range=5
+    )
 
     print(contact_dict)
     print(filtered_contact_dict)
-    
+
     regressed_states = info["ball_state_history"]
     simulated_states = info["simulated_ball_state_history"]
     distances = info["xy_pred_errors"]
@@ -541,8 +543,8 @@ def test_contact_dict_filter():
         axs[i].scatter(
             ball_time_stamps, ball_positions[:, i], s=marker_size, label="data"
         )
-        
-        axs[i+3].scatter(
+
+        axs[i + 3].scatter(
             ball_time_stamps, ball_positions[:, i], s=marker_size, label="data"
         )
 
@@ -567,8 +569,8 @@ def test_contact_dict_filter():
                     alpha=0.5,
                     label="Table Contact",
                 )
-                
-    for i in range(3,6):
+
+    for i in range(3, 6):
         for index, contact_type in filtered_contact_dict.items():
             if contact_type == ContactType.RACKET:
                 racket_color = "#17c7d0"
@@ -590,7 +592,6 @@ def test_contact_dict_filter():
                     label="Table Contact",
                 )
 
-
     # Distance distribution
     axs[-1].scatter(
         ball_time_stamps[WINDOW_SIZE:-SIMULATION_DELAY],
@@ -609,10 +610,11 @@ def test_contact_dict_filter():
         s=marker_size,
     )
 
+
 def visualize_regressed_velocity_vectors():
     marker_size = 1.25
     index = str(INDEX)
-    
+
     arrow_length = 0.01
     idx_delta = 2
 
@@ -621,37 +623,60 @@ def visualize_regressed_velocity_vectors():
     ball_time_stamps = collection[index]["ball_time_stamps"]
     ball_positions = collection[index]["ball_positions"]
     ball_velocities = collection[index]["ball_velocities"]
-    
+
     contact_dict, info = detect_rebounds(
         time_stamps=ball_time_stamps, positions=ball_positions, return_states=True
     )
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    
-    ax.scatter(ball_positions[:, 0], ball_positions[:, 1], ball_positions[:, 2], s=marker_size, alpha=0.5)
-    
+
+    ax.scatter(
+        ball_positions[:, 0],
+        ball_positions[:, 1],
+        ball_positions[:, 2],
+        s=marker_size,
+        alpha=0.5,
+    )
+
     for key, value in contact_dict.items():
         idx_before = key - idx_delta
         pos_x, pos_y, pos_z = ball_positions[idx_before]
         vel_x, vel_y, vel_z = ball_velocities[idx_before]
         v_mag = norm(ball_velocities[idx_before])
-        
-        ax.quiver(pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
-                length=arrow_length*v_mag, color='red', label=f'Velocity before')
 
+        ax.quiver(
+            pos_x,
+            pos_y,
+            pos_z,
+            vel_x,
+            vel_y,
+            vel_z,
+            length=arrow_length * v_mag,
+            color="red",
+            label=f"Velocity before",
+        )
 
         idx_after = key + idx_delta
         pos_x, pos_y, pos_z = ball_positions[idx_after]
         vel_x, vel_y, vel_z = ball_velocities[idx_after]
         v_mag = norm(ball_velocities[idx_after])
-        
-        ax.quiver(pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
-                length=arrow_length*v_mag, color='green', label=f'Velocity after')
-        
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+
+        ax.quiver(
+            pos_x,
+            pos_y,
+            pos_z,
+            vel_x,
+            vel_y,
+            vel_z,
+            length=arrow_length * v_mag,
+            color="green",
+            label=f"Velocity after",
+        )
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
     # Set the aspect ratio of the 3D plot to be equal
     ax.set_aspect("equal")
     pass
@@ -663,7 +688,7 @@ def test_orientation_calculation():
     import numpy as np
     from scipy.spatial.transform import Rotation
 
-    from ball_prediction.spin_estimator import compute_racket_orientation
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import compute_racket_orientation
 
     np.set_printoptions(suppress=True)
     pi = math.pi
@@ -750,7 +775,7 @@ def test_orientation_calculation_homogenous():
     import numpy as np
     from scipy.spatial.transform import Rotation
 
-    from ball_prediction.spin_estimator import compute_racket_orientation
+    from ball_prediction.ball_prediction.contact_models.spin_estimator import compute_racket_orientation
 
     np.set_printoptions(suppress=True)
     pi = math.pi
@@ -874,7 +899,7 @@ if __name__ == "__main__":
     # test_spin_estimator()
 
     # test_contact_dict_filter()
-    
+
     visualize_regressed_velocity_vectors()
-    
+
     plt.show()
