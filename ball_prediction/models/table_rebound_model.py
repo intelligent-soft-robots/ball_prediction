@@ -28,7 +28,9 @@ class Hayakawa2021TableContact(BaseTableContact):
     URL:
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.9.50
 
+    Ball Flight Model:      True
     Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -78,7 +80,9 @@ class Nakashima2014TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6878188
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -125,7 +129,9 @@ class Nakashima2010TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5530520
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -173,7 +179,9 @@ class Zhao2016TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7469824
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -221,7 +229,9 @@ class Huang2011TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6095044
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -269,7 +279,9 @@ class Bao2012TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6285129
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -317,7 +329,9 @@ class Liu2012TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6490973
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -364,7 +378,9 @@ class Liu2013TableContact(BaseTableContact):
     URL:
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.6.259
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -411,7 +427,9 @@ class Nonomura2010TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5603024
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -459,7 +477,9 @@ class Zhang2010TableContactModel(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5454397
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -506,7 +526,9 @@ class ZZhang2010TableContactModel(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5723356
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================
@@ -553,7 +575,9 @@ class Zhang2014TableContact(BaseTableContact):
     URL:
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6907456
 
-    Racket Rebound Model:   False
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
 
     Approach:
     =============================

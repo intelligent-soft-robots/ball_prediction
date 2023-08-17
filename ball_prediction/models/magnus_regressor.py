@@ -38,6 +38,8 @@ class MagnusRegressor:
         self.c_lift = physics_config["lift_coefficient"]
         self.c_decay = physics_config["decay_coefficient"]
 
+        self.A = np.pi * self.r_ball**2
+
     def _derivate(
         self,
         time_stamps: np.typing.NDArray,
@@ -52,23 +54,24 @@ class MagnusRegressor:
                 time_stamps, positions[:, axis], deg=self.poly_deg
             )
             velocities = poly.deriv()
-            accelerations = poly.deriv()
+            accelerations = poly.deriv(2)
 
             v.append(velocities(eval_time))
             a.append(accelerations(eval_time))
 
         return np.array(v), np.array(a)
 
-    def _compute_drag(self, v: Velocity3D) -> Force3D:
-        m_ball = self.m_ball
+    def _compute_drag_force(self, v: Velocity3D) -> Force3D:
         c_drag = self.c_drag
         rho = self.rho
-        A = np.pi * self.r_ball**2
+        A = self.A
 
-        return -0.5 * rho * c_drag * A / m_ball * np.linalg.norm(v) * v
+        return -0.5 * rho * c_drag * A * np.linalg.norm(v) * v
 
-    def _compute_gravity(self) -> Force3D:
-        return -self.g * np.array([0.0, 0.0, 1.0])
+    def _compute_gravity_force(self) -> Force3D:
+        m_ball = self.m_ball
+        g = self.g
+        return -m_ball * g * np.array([0.0, 0.0, 1.0])
 
     def compute(
         self,
@@ -86,8 +89,8 @@ class MagnusRegressor:
 
         m_ball = self.m_ball
 
-        F_d = self._compute_drag(v_ball)
-        F_g = self._compute_gravity()
+        F_d = self._compute_drag_force(v_ball)
+        F_g = self._compute_gravity_force()
 
         return m_ball * a_ball - F_g - F_d
 
@@ -96,10 +99,9 @@ def compute_magnus_force(velocity, spin, physics_config):
     v = np.array(velocity)
     omega = np.array(spin)
 
-    m_ball = physics_config["ball_mass"]
     r_ball = physics_config["ball_radius"]
     rho = physics_config["air_density"]
     c_lift = physics_config["lift_coefficient"]
     A = np.pi * r_ball**2
 
-    return 0.5 * rho * c_lift * A * r_ball / m_ball * np.cross(omega, v)
+    return 0.5 * rho * c_lift * A * r_ball * np.cross(omega, v)

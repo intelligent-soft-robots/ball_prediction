@@ -7,7 +7,7 @@ def bayesian_optimization(
     model_class, training_class, input_data, input_dim, output_dim
 ):
     param_space = {
-        "hidden_neurons": [(32, 256), (32, 256)],
+        "hidden_neurons": [(32, 1024), (32, 1024)],
         "learning_rate": (1e-5, 1e-1, "log-uniform"),
         "dropout_rate": (0.0, 0.5),
         "use_layer_norm": [True, False],

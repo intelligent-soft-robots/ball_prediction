@@ -5,7 +5,7 @@ from numpy.linalg import norm
 from numpy.random import randint
 from scipy.signal import savgol_filter
 
-from ball_prediction.ball_prediction.contact_models.spin_estimator import (
+from ball_prediction.models.spin_estimator import (
     DETECTION_THRESHOLD,
     SIMULATION_DELAY,
     WINDOW_SIZE,
