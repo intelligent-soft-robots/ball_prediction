@@ -20,8 +20,8 @@ class Hayakawa2021TableContact(BaseTableContact):
     """
     Source:
     Hayakawa, Yoshikazu, et al.
-    "Ball trajectory planning in serving task for
-    table tennis robot."
+    "Ball trajectory planning in serving task for table tennis
+    robot."
     SICE Journal of Control, Measurement,
     and System Integration 9.2 (2016): 50-59.
 
@@ -118,8 +118,8 @@ class Nakashima2010TableContact(BaseTableContact):
     """
     Source:
     Nakashima, Akira, et al.
-    "Modeling of rebound phenomenon of a rigid ball with
-    friction and elastic effects."
+    "Modeling of rebound phenomenon of a rigid ball with friction
+    and elastic effects."
     Proceedings of the 2010 American Control Conference.
 
     URL:
@@ -165,8 +165,8 @@ class Zhao2016TableContact(BaseTableContact):
     """
     Source:
     Zhao, Yongsheng, Rong Xiong, and Yifeng Zhang.
-    "Rebound modeling of spinning ping-pong ball based on
-    multiple visual measurements."
+    "Rebound modeling of spinning ping-pong ball based on multiple
+    visual measurements."
     IEEE Transactions on Instrumentation
     and Measurement 65.8 (2016): 1836-1846.
 
@@ -213,8 +213,8 @@ class Huang2011TableContact(BaseTableContact):
     """
     Source:
     Huang, Yanlong, et al.
-    "Trajectory prediction of spinning ball for ping-pong
-    player robot."
+    "Trajectory prediction of spinning ball for ping-pong player
+    robot."
     2011 IEEE/RSJ International Conference on Intelligent
     Robots and Systems.
 
@@ -261,8 +261,8 @@ class Bao2012TableContact(BaseTableContact):
     """
     Source:
     Bao, Han, et al.
-    "Bouncing model for the table tennis trajectory prediction
-    and the strategy of hitting the ball."
+    "Bouncing model for the table tennis trajectory prediction and
+    the strategy of hitting the ball."
     2012 IEEE International Conference on Mechatronics and
     Automation.
 
@@ -309,8 +309,8 @@ class Liu2012TableContact(BaseTableContact):
     """
     Source:
     Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
-    "Racket control and its experiments for robot playing
-    table tennis."
+    "Racket control and its experiments for robot playing table
+    tennis."
     2012 IEEE International Conference on Robotics and
     Biomimetics (ROBIO).
 
@@ -404,8 +404,8 @@ class Nonomura2010TableContact(BaseTableContact):
     """
     Source:
     Nonomura, Junko, Akira Nakashima, and Yoshikazu Hayakawa.
-    "Analysis of effects of rebounds and aerodynamics for
-    trajectory of table tennis ball."
+    "Analysis of effects of rebounds and aerodynamics for trajectory
+    of table tennis ball."
     Proceedings of SICE Annual Conference 2010.
 
     URL:
@@ -451,8 +451,8 @@ class Zhang2010TableContactModel(BaseTableContact):
     """
     Source:
     Zhang, Zhengtao, De Xu, and Min Tan.
-    "Visual measurement and prediction of ball trajectory for
-    table tennis robot."
+    "Visual measurement and prediction of ball trajectory for table
+    tennis robot."
     IEEE Transactions on Instrumentation and Measurement
     59.12 (2010): 3195-3205.
 
@@ -499,8 +499,7 @@ class ZZhang2010TableContactModel(BaseTableContact):
     """
     Source:
     Zhang, Zhengtao, De Xu, and Ping Yang.
-    "Rebound model of table tennis ball for trajectory
-    prediction."
+    "Rebound model of table tennis ball for trajectory prediction."
     2010 IEEE International Conference on Robotics
     and Biomimetics. IEEE, 2010
 
@@ -547,8 +546,7 @@ class Zhang2014TableContact(BaseTableContact):
     """
     Source:
     Zhang, Yifeng, et al.
-    "Spin observation and trajectory prediction of a
-    ping-pong ball."
+    "Spin observation and trajectory prediction of a ping-pong ball."
     2014 IEEE international conference on robotics and
     automation (ICRA).
 
@@ -621,7 +619,15 @@ class AnalyticTableContact(BaseTableContact):
 
 
 class MLPTableContact(BaseTableContact):
-    def __init__(self) -> None:
+    def __init__(self, torch_file: str) -> None:
+        pass
+
+    def forward(self):
+        pass
+
+
+class PINNTableContact(BaseTableContact):
+    def __init__(self, torch_file: str) -> None:
         pass
 
     def forward(self):
@@ -629,7 +635,7 @@ class MLPTableContact(BaseTableContact):
 
 
 class GPTableContact(BaseTableContact):
-    def __init__(self) -> None:
+    def __init__(self, kernel_file: str) -> None:
         pass
 
     def forward(self):

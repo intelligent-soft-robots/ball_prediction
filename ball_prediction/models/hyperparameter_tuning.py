@@ -52,7 +52,7 @@ def random_search(model_class, training_class, input_data, input_dim, output_dim
 
 
 def population_based_search(
-    model_class, training_class, input_data, input_dim, output_dim
+    model_class, training_class, input_data, output_data, input_dim, output_dim
 ):
     def objective(trial):
         # Define parameter search space
@@ -67,7 +67,7 @@ def population_based_search(
         trainer = training_class(model, num_epochs=100, learning_rate=learning_rate)
 
         # Train the model and get the loss
-        loss = trainer.train(input_data)
+        loss = trainer.train(input_data, output_data)
 
         return loss
 

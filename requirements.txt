@@ -1,6 +1,15 @@
+# Standard libraries
 numpy
 scipy
 sympy
 tomlkit
 matplotlib
+
+# kinematics library
 pin
+
+# learning libraries
+torch               # deep learning libraries
+optuna              # for hyperparameter tuning
+scikit-optimize     # for hyperparameter tuning
+scikit-learn        # for hyperparameter tuning
