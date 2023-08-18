@@ -634,6 +634,27 @@ class MuJoCo2012TableContact(BaseTableContact):
     pass
 
 
+class SimpleTableContact(BaseTableContact):
+    def __init__(self) -> None:
+        self.restitution_factor = 0.97
+
+    def forward(self, q):
+        mu = self.restitution_factor
+
+        contact_matrix = np.array(
+            [
+                [1.0000, 0.0000, 0.0000, 0.0000, 0.0015, 0.0000],
+                [0.0000, 1.0000, 0.0000, 0.0015, 0.0000, 0.0000],
+                [0.0000, 0.0000, -1.0 * mu, 0.0000, 0.0000, 0.0000],
+                [0.0000, 0.0000, 0.0000, 1.0000, 0.0000, 0.0000],
+                [0.0000, 0.0000, 0.0000, 0.0000, 1.0000, 0.0000],
+                [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000],
+            ]
+        )
+
+        return contact_matrix @ q
+
+
 class AnalyticTableContact(BaseTableContact):
     def __init__(self) -> None:
         pass

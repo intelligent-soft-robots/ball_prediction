@@ -1,11 +1,10 @@
-import numpy as np
-
-from scipy.signal import find_peaks
-
 from typing import Dict, List, Optional, Sequence, Union
 
-from ball_prediction.models.utils import ContactType
+import numpy as np
+from scipy.signal import find_peaks
+
 from ball_prediction.models.magnus_regressor import compute_velocity_regression
+from ball_prediction.models.utils import ContactType
 
 WINDOW_SIZE = 10
 POLYNOMIAL_DEGREE = 1
@@ -15,6 +14,7 @@ TABLE_PLANE_HEIGHT = 0.77
 TABLE_DETECTION_THRESHOLD = 0.10
 TABLE_DETECTION_SAMPLE_DISTANCE = 10
 SIMULATION_DELAY = 5
+
 
 def detect_rebounds(
     time_stamps: np.ndarray,
@@ -120,6 +120,7 @@ def detect_rebounds(
         return contact_dict, info
 
     return contact_dict
+
 
 def step_ball_simulation(ball_state, dt):
     # Constants

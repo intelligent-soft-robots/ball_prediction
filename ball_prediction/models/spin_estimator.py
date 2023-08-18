@@ -1,6 +1,5 @@
 import logging
 import warnings
-
 from typing import Dict, List, Optional, Sequence, Union
 
 from numpy import (
@@ -21,12 +20,10 @@ from numpy import (
 )
 from numpy.linalg import norm
 
-
-from ball_prediction.models.racket_kinematics import compute_racket_orientation
 from ball_prediction.models.ball_simulation import BallSimulationSpin
-from ball_prediction.models.utils import ContactType
 from ball_prediction.models.magnus_regressor import compute_velocity_regression
-
+from ball_prediction.models.racket_kinematics import compute_racket_orientation
+from ball_prediction.models.utils import ContactType
 
 
 def linear_table_contact(velocity_before_bounce):
@@ -46,9 +43,9 @@ def lineare_racket_contact(
     # ball and racket does not lose energy due to elastic deformation of the ball
     # all energy is fully maintained.
     # surface is perfectly flat and is fully described by normal vector.
-    
+
     racket_normal = compute_racket_orientation(joint_angles_rad=robot_joint_angles_rad)
-    
+
     v_before = array(velocity_before_bounce)
     racket_normal = array(racket_normal)
 
@@ -62,7 +59,7 @@ def lineare_racket_contact(
     v_parallel = v_before - v_perpendicular
 
     # Calculate the velocity vector of the ball after the collision (v_out)
-    velocity_after_bounce =  v_parallel - v_perpendicular
+    velocity_after_bounce = v_parallel - v_perpendicular
 
     return velocity_after_bounce
 

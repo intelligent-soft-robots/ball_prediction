@@ -42,11 +42,11 @@ class BallSimulationSpin:
         while t < t_end:
             _q = self.step(q=q, dt=dt)
 
-            if self.check_table_contact(_q):
-                _q = self.table_rebound_model(_q)
+            # if self.check_table_contact(_q):
+            #    _q = self.table_rebound_model(_q)
 
-            if self.check_racket_contact(_q):
-                _q = self.racket_rebound_model(_q)
+            # if self.check_racket_contact(_q):
+            #    _q = self.racket_rebound_model(_q)
 
             q = _q
             t += dt
@@ -80,7 +80,7 @@ class BallSimulationSpin:
         omega = q[6:9]
 
         F_gravity = k_gravity * np.array([0, 0, -1])
-        F_drag = k_drag * np.norm(v) * v
+        F_drag = k_drag * np.linalg.norm(v) * v
         F_magnus = k_magnus * np.cross(omega, v)
 
         # System dynamics

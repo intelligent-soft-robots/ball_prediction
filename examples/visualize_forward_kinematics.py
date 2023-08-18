@@ -1,15 +1,15 @@
 import math
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.spatial.transform import Rotation
 
 from ball_prediction.ball_prediction.models.racket_kinematics import (
     compute_racket_orientation,
 )
 
-def test_orientation_calculation():
 
+def test_orientation_calculation():
     np.set_printoptions(suppress=True)
     pi = math.pi
 

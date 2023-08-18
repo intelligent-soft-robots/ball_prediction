@@ -23,7 +23,7 @@ def filter_outside_region(
     zlimit: Tuple[float],
 ):
     limits = [xlimit, ylimit, zlimit]
-    
+
     positions = item["ball_positions"]
     delete_indices = []
 
@@ -32,17 +32,17 @@ def filter_outside_region(
             if not (limits[axis][0] < positions[idx][axis] < limits[axis][1]):
                 delete_indices.append(idx)
                 break
-    
+
     return delete_indices
 
 
 def remove_samples(item, indices_to_remove):
     print(indices_to_remove)
-    
+
     for key, values in item.items():
         if key == "launch_parameter":
             continue
-        
+
         if key == "date_stamp":
             continue
 

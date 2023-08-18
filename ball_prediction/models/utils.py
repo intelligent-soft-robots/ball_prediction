@@ -16,6 +16,7 @@ def revolutions_to_radians(revolutions_per_second_sequence):
     ]
     return radians_per_second_sequence
 
+
 class ContactType(Enum):
     RACKET = "racket"
     TABLE = "table"

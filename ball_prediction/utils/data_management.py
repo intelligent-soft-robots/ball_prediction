@@ -69,4 +69,3 @@ def concatenate_dicts():
     for path in file_paths:
         collection = load_robot_ball_data(path)
         concatenate_collection.update(collection)
-

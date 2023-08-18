@@ -476,9 +476,7 @@ def load_data():
 
 
 def test_indicies_compare():
-    from ball_prediction.models.spin_estimator import (
-        check_difference_below_threshold,
-    )
+    from ball_prediction.models.spin_estimator import check_difference_below_threshold
 
     threshold = 5
     n_runs = 100

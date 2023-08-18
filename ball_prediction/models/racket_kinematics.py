@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def compute_racket_orientation(
     joint_angles_rad,
 ):
@@ -39,11 +40,12 @@ def compute_racket_orientation(
     T_65 = rotation_matrix_z(theta_4)
 
     T_60 = T_65 @ T_43 @ T_21 @ T_10
-    T_60 = T_10 @ T_21 @ T_43 @ T_65 
-    
+    T_60 = T_10 @ T_21 @ T_43 @ T_65
+
     trans_racket_normal = T_60 @ T_COMP @ racket_normal
 
     return trans_racket_normal[:3]
+
 
 def compute_racket_velocity():
     pass
