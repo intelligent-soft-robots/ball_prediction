@@ -1,3 +1,5 @@
+from enum import Enum
+
 import numpy as np
 
 
@@ -13,3 +15,8 @@ def revolutions_to_radians(revolutions_per_second_sequence):
         revs * 2 * np.pi for revs in revolutions_per_second_sequence
     ]
     return radians_per_second_sequence
+
+class ContactType(Enum):
+    RACKET = "racket"
+    TABLE = "table"
+    UNKNOWN = "unknown"

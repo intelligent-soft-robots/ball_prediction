@@ -57,3 +57,16 @@ def load_ball_data(file_path: str):
 
 def load_robot_ball_data_tobuschat(file_path: str):
     pass
+
+
+def concatenate_dicts():
+    file_paths = [
+        "",
+        "",
+    ]
+
+    concatenate_collection = {}
+    for path in file_paths:
+        collection = load_robot_ball_data(path)
+        concatenate_collection.update(collection)
+

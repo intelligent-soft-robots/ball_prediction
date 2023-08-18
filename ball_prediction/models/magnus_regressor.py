@@ -105,3 +105,22 @@ def compute_magnus_force(velocity, spin, physics_config):
     A = np.pi * r_ball**2
 
     return 0.5 * rho * c_lift * A * r_ball * np.cross(omega, v)
+
+
+def compute_velocity_regression(
+    time_stamps: np.ndarray,
+    positions: np.ndarray,
+    polynomial_degree: int = 3,
+) -> np.ndarray:
+    velocities = np.empty_like(positions)
+
+    for axis in range(3):
+        position_polynomial = np.polynomial.Polynomial.fit(
+            time_stamps, positions[:, axis], deg=polynomial_degree
+        )
+
+        velocity_polynomial = position_polynomial.deriv()
+
+        velocities[:, axis] = velocity_polynomial(time_stamps)
+
+    return velocities
