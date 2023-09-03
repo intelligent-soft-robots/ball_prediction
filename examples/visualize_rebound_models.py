@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ball_prediction.models.table_rebound_model import *
 from ball_prediction.models.racket_rebound_model import *
-from ball_prediction.utils.data_management import load_robot_ball_data, load_ball_data
+from ball_prediction.models.table_rebound_model import *
 from ball_prediction.models.utils import ContactType
+from ball_prediction.utils.data_management import load_ball_data, load_robot_ball_data
 
 np.set_printoptions(suppress=True)
 
-from ball_prediction.models.rebound_detection import detect_rebounds
 from ball_prediction.models.ball_simulation import BallSimulationSpin
+from ball_prediction.models.rebound_detection import detect_rebounds
 
 file_path_nospin = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/data/no_spin_robot_simple.hdf5"
 file_path_backspin = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/data/mn5008_backspin.hdf5"
@@ -128,7 +128,7 @@ for i, (key, value) in enumerate(contact_dict.items(), start=1):
             iter += 1
 
         num_plotted += 1
-        
+
 
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
