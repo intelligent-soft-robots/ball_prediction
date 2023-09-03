@@ -33,7 +33,7 @@ def test_magnus_implementation():
     positions = ball_positions[start:end]
     velocities = ball_velocities[start:end]
 
-    poly_deg = 3
+    poly_deg = 2
 
     physics_config = {
         "ball_mass": 0.027,

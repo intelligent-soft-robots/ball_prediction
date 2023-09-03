@@ -39,7 +39,7 @@ class SimpleRacketContact(BaseRacketContact):
         return contact_matrix @ q_ball
 
 
-class Hayakawa2021RacketContact(BaseRacketContact):
+class Hayakawa2016RacketContact(BaseRacketContact):
     """
     Source:
     Hayakawa, Yoshikazu, et al.
@@ -49,6 +49,7 @@ class Hayakawa2021RacketContact(BaseRacketContact):
     and System Integration 9.2 (2016): 50-59.
 
     URL:
+    https://www.tandfonline.com/doi/abs/10.9746/jcmsi.9.50
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.9.50
 
     Ball Flight Model:      True
@@ -85,27 +86,57 @@ class Hayakawa2021RacketContact(BaseRacketContact):
     def __init__(self) -> None:
         pass
 
-    def forward(self, q) -> npt.NDArray:
+    def forward(
+        self,
+        q_ball: Sequence[float],
+        v_racket: Sequence[float],
+        orientation_racket: Sequence[float],
+    ) -> npt.NDArray:
+        v_x = q_ball[0] - v_racket[0]
+        v_y = q_ball[1] - v_racket[1]
+        v_z = q_ball[2] - v_racket[2]
+
+        omega_x = q_ball[3]
+        omega_y = q_ball[4]
+        omega_z = q_ball[5]
+
+        q_ball_before = np.array([v_x, v_y, v_z, omega_x, omega_y, omega_z])
+
+        alpha = orientation_racket[0]
+        beta = orientation_racket[1]
+
+        m_ball = 0.0027
         r_ball = 0.02  # ball radius
         mu = 0.25  # dynamic friction coefficient
-        e_t = 0.93  # restituation coefficient
+        k_omega = 0.0
+        k_v = 0.0
+        e_r = 0.93  # restituation coefficient
 
-        v_z = np.abs(q[2])
-        v_T = np.linalg.norm(q[0:3])
+        inertia_coeff = 2 / 3 * m_ball * r_ball**2
 
-        v_s = 1 - 5 / 2 * mu * (1 + e_t) * v_z / v_T
-
-        if v_T != 0 and v_s > 0:
-            a = 0
-        else:
-            a = 2 / 5
-
-        I_2 = np.array(
+        R_R = np.array(
             [
-                [1, 0],
-                [0, 1],
+                [
+                    np.cos(beta),
+                    np.sin(beta) * np.sin(alpha),
+                    np.sin(beta) * np.cos(alpha),
+                ],
+                [0, np.cos(alpha), -np.sin(alpha)],
+                [
+                    -np.sin(beta),
+                    np.cos(beta) * np.sin(alpha),
+                    np.cos(beta) * np.cos(alpha),
+                ],
             ]
         )
+
+        block_upper = np.hstack((R_R, np.zeros(3)))
+        block_lower = np.hstack((np.zeros(3), R_R))
+        block = np.vstack((block_upper, block_lower))
+
+        R = np.eye(6) - block
+
+        # Inertia matrix in 2D
         S_12 = np.array(
             [
                 [0, 1, 0],
@@ -114,14 +145,34 @@ class Hayakawa2021RacketContact(BaseRacketContact):
             ]
         )
 
-        A_t = np.array([[(1 - a) * I_2, 0], [0, -e_t]])
-        B_t = a * r_ball * S_12
-        C_t = -(3 * a) / (2 * r_ball) * S_12
-        D_t = np.array([[(1 - 3 * a / 2) * I_2, 1], [0, 1]])
+        A_t = np.array(
+            [
+                [(1 - k_v) * inertia_coeff, 0, 0],
+                [0, (1 - k_v) * inertia_coeff, 0],
+                [0, 0, -e_r],
+            ]
+        )
+        B_t = k_v * r_ball * S_12
+        C_t = -k_omega / r_ball * S_12
+        D_t = np.array(
+            [
+                [(1 - k_omega) * inertia_coeff, 0, 1],
+                [0, (1 - k_omega) * inertia_coeff, 0],
+                [0, 0, 1],
+            ]
+        )
 
-        T = np.array([[A_t, B_t], [C_t, D_t]])
+        T_upper = np.hstack((A_t, B_t))
+        T_lower = np.hstack((C_t, D_t))
+        T = np.vstack((T_upper, T_lower))
 
-        return T @ q
+        q_ball_after = R @ T @ R.T @ q_ball_before
+
+        q_ball_after[0] = q_ball_after[0] + v_racket[0]
+        q_ball_after[1] = q_ball_after[1] + v_racket[1]
+        q_ball_after[2] = q_ball_after[2] + v_racket[2]
+
+        return q_ball_after
 
 
 class Nakashima2014RacketContact(BaseRacketContact):

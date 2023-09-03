@@ -37,7 +37,7 @@ class SimpleTableContact(BaseTableContact):
         return contact_matrix @ q
 
 
-class Hayakawa2021TableContact(BaseTableContact):
+class Hayakawa2016TableContact(BaseTableContact):
     """
     Source:
     Hayakawa, Yoshikazu, et al.
@@ -47,6 +47,7 @@ class Hayakawa2021TableContact(BaseTableContact):
     and System Integration 9.2 (2016): 50-59.
 
     URL:
+    https://www.tandfonline.com/doi/abs/10.9746/jcmsi.9.50
     https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.9.50
 
     Ball Flight Model:      True
@@ -150,6 +151,7 @@ class Zhang2014TableContact(BaseTableContact):
     automation (ICRA).
 
     URL:
+    https://ieeexplore.ieee.org/document/6907456
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6907456
 
     Ball Flight Model:      True
@@ -230,6 +232,7 @@ class Nakashima2010TableContact(BaseTableContact):
     Proceedings of the 2010 American Control Conference.
 
     URL:
+    https://ieeexplore.ieee.org/document/5530520
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5530520
 
     Ball Flight Model:      True
@@ -331,6 +334,7 @@ class Huang2011TableContact(BaseTableContact):
     Robots and Systems.
 
     URL:
+    https://ieeexplore.ieee.org/document/6095044
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6095044
 
     Ball Flight Model:      True
@@ -411,6 +415,7 @@ class Zhang2010TableContact(BaseTableContact):
     59.12 (2010): 3195-3205.
 
     URL:
+    https://ieeexplore.ieee.org/document/5454397
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5454397
 
     Ball Flight Model:      True
@@ -486,6 +491,7 @@ class Zhao2016TableContact(BaseTableContact):
     and Measurement 65.8 (2016): 1836-1846.
 
     URL:
+    https://ieeexplore.ieee.org/document/7469824
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7469824
 
     Ball Flight Model:      True
@@ -539,6 +545,7 @@ class Nonomura2010TableContact(BaseTableContact):
     Proceedings of SICE Annual Conference 2010.
 
     URL:
+    https://ieeexplore.ieee.org/document/5603024
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5603024
 
     Ball Flight Model:      True
@@ -587,6 +594,7 @@ class Bao2012TableContact(BaseTableContact):
     Automation.
 
     URL:
+    https://ieeexplore.ieee.org/document/6285129
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6285129
 
     Ball Flight Model:      True
@@ -635,11 +643,13 @@ class ZZhang2010TableContactModel(BaseTableContact):
     2010 IEEE International Conference on Robotics
     and Biomimetics. IEEE, 2010
 
-    URL: Hayakawa2021TableContact()
+    URL:
+    https://ieeexplore.ieee.org/document/5723356
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5723356
 
     model.forward([1, 1, 1, 1, 1, 1])
     Ball Flight Model:      True
-    Racket Rebound Model:   True
+    Racket Rebound Model:   False
     Spin unit:              1/s or rad/s or None
 
     Approach:
@@ -673,6 +683,101 @@ class ZZhang2010TableContactModel(BaseTableContact):
         raise NotImplementedError
 
 
+class Liu2012TableContact(BaseTableContact):
+    """
+    Source:
+    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
+    "Racket control and its experiments for robot playing table
+    tennis."
+    2012 IEEE International Conference on Robotics and
+    Biomimetics (ROBIO).
+
+    URL:
+    https://ieeexplore.ieee.org/document/6490973
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6490973
+
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
+
+    Approach:
+    =============================
+    Analytic model:         False
+    System identification:  False
+    ML model:               False
+    Linear model:           False
+    FEM:                    False
+    Spring-Damper-Model:    False
+
+    Effects considered:
+    =============================
+    Spin:                   False
+    Friction:               False
+    Ball elasticity:        False
+    Surface Rolling:        False
+    Surface Unevenness:     False
+    Point Contact:          False
+    Surface Contact:        False
+
+    Other assumptions or restrictions:
+    -
+
+    Args:
+        BaseTableContact (abc): BaseTableContact default
+        class.
+    """
+
+    def __init__(self) -> None:
+        raise NotImplementedError
+
+
+class Liu2013RacketContact(BaseTableContact):
+    """
+    Source:
+    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
+    "Racket control for a table tennis robot to return a ball."
+    SICE Journal of Control, Measurement, and System
+    Integration 6.4 (2013): 259-266.
+
+    URL:
+    https://www.tandfonline.com/doi/abs/10.9746/jcmsi.6.259
+    https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.6.259
+
+    Ball Flight Model:      True
+    Racket Rebound Model:   True
+    Spin unit:              1/s or rad/s or None
+
+    Approach:
+    =============================
+    Analytic model:         False
+    System identification:  False
+    ML model:               False
+    Linear model:           False
+    FEM:                    False
+    Spring-Damper-Model:    False
+
+    Effects considered:
+    =============================
+    Spin:                   False
+    Friction:               False
+    Ball elasticity:        False
+    Surface Rolling:        False
+    Surface Unevenness:     False
+    Point Contact:          False
+    Surface Contact:        False
+
+    Other assumptions or restrictions:
+    -
+
+    Args:
+        BaseTableContact (abc): BaseTableContact default
+        class.
+    """
+
+    def __init__(self) -> None:
+        raise NotImplementedError
+
+
 class MuJoCo2012TableContact(BaseTableContact):
     """
     Use MuJoCo simulation as baseline.
@@ -684,6 +789,7 @@ class MuJoCo2012TableContact(BaseTableContact):
     robots and systems. IEEE, 2012.
 
     URL:
+    https://ieeexplore.ieee.org/document/6386109
     https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6386109
 
     Args:
