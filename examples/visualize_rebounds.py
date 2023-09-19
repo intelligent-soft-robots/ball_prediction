@@ -8,12 +8,12 @@ from ball_prediction.models.spin_estimator import ContactType
 from ball_prediction.utils.data_management import load_robot_ball_data
 
 FILE_PATH = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/data/no_spin_robot.hdf5"
-INDEX = 112  # clean sample at 59
+INDEX = 14  # clean sample at 59
 
 
 def visualize_regressed_velocity_vectors():
     marker_size = 1.25
-    index = str(INDEX)
+    index = INDEX
     file_path = FILE_PATH
 
     regression = True

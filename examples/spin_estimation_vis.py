@@ -5,16 +5,19 @@ from numpy.linalg import norm
 from numpy.random import randint
 from scipy.signal import savgol_filter
 
-from ball_prediction.models.spin_estimator import (
+from ball_prediction.models.ball_simulation import BallSimulationSpin
+from ball_prediction.models.magnus_regressor import (
+    PHYSICS_CFG,
+    compute_velocity_regression,
+)
+from ball_prediction.models.rebound_detection import (
     DETECTION_THRESHOLD,
     SIMULATION_DELAY,
     WINDOW_SIZE,
-    ContactType,
     detect_rebounds,
     filter_rebounds,
-    get_regressed_state,
-    step_ball_simulation,
 )
+from ball_prediction.models.spin_estimator import ContactType
 
 FILE_PATH = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/data/no_spin_robot.hdf5"
 INDEX = 59  # clean sample at 59
@@ -102,7 +105,7 @@ def velocity_regression_visualisation():
     start_regression = 10
     regression_window = WINDOW_SIZE
 
-    regressed_state, info = get_regressed_state(
+    regressed_state, info = compute_velocity_regression(
         time_stamps=ball_time_stamps[
             start_regression : start_regression + regression_window
         ],
@@ -110,7 +113,6 @@ def velocity_regression_visualisation():
             start_regression : start_regression + regression_window, :
         ],
         polynomial_degree=3,
-        return_info=True,
     )
 
     print(

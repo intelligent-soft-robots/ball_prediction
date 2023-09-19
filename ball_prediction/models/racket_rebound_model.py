@@ -39,18 +39,17 @@ class SimpleRacketContact(BaseRacketContact):
         return contact_matrix @ q_ball
 
 
-class Hayakawa2016RacketContact(BaseRacketContact):
+class Nakashima2010RacketContact(BaseRacketContact):
     """
     Source:
-    Hayakawa, Yoshikazu, et al.
-    "Ball trajectory planning in serving task for table tennis
-    robot."
-    SICE Journal of Control, Measurement,
-    and System Integration 9.2 (2016): 50-59.
+    Nakashima, Akira, et al.
+    "Modeling of rebound phenomenon of a rigid ball with friction
+    and elastic effects."
+    Proceedings of the 2010 American Control Conference.
 
     URL:
-    https://www.tandfonline.com/doi/abs/10.9746/jcmsi.9.50
-    https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.9.50
+    https://ieeexplore.ieee.org/document/5530520
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5530520
 
     Ball Flight Model:      True
     Racket Rebound Model:   True
@@ -173,152 +172,3 @@ class Hayakawa2016RacketContact(BaseRacketContact):
         q_ball_after[2] = q_ball_after[2] + v_racket[2]
 
         return q_ball_after
-
-
-class Nakashima2014RacketContact(BaseRacketContact):
-    """
-    Source:
-    Nakashima, Akira, Daigo Ito, and Yoshikazu Hayakawa.
-    "An online trajectory planning of struck ball with spin
-    by table tennis robot."
-    2014 IEEE/ASME International Conference on Advanced
-    Intelligent Mechatronics. IEEE, 2014.
-
-    URL:
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6878188
-
-    Ball Flight Model:      True
-    Racket Rebound Model:   True
-    Spin unit:              1/s or rad/s or None
-
-    Approach:
-    =============================
-    Analytic model:         False
-    System identification:  False
-    ML model:               False
-    Linear model:           False
-    FEM:                    False
-    Spring-Damper-Model:    False
-
-    Effects considered:
-    =============================
-    Spin:                   False
-    Friction:               False
-    Ball elasticity:        False
-    Surface Rolling:        False
-    Surface Unevenness:     False
-    Point Contact:          False
-    Surface Contact:        False
-
-    Other assumptions or restrictions:
-    -
-
-    Args:
-        BaseTableContact (abc): BaseTableContact default
-        class.
-    """
-
-    def __init__(self) -> None:
-        pass
-
-    def forward():
-        pass
-
-
-class Liu2012RacketContact(BaseRacketContact):
-    """
-    Source:
-    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
-    "Racket control and its experiments for robot playing table
-    tennis."
-    2012 IEEE International Conference on Robotics and
-    Biomimetics (ROBIO).
-
-    URL:
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6490973
-
-    Ball Flight Model:      True
-    Racket Rebound Model:   True
-    Spin unit:              1/s or rad/s or None
-
-    Approach:
-    =============================
-    Analytic model:         False
-    System identification:  False
-    ML model:               False
-    Linear model:           False
-    FEM:                    False
-    Spring-Damper-Model:    False
-
-    Effects considered:
-    =============================
-    Spin:                   False
-    Friction:               False
-    Ball elasticity:        False
-    Surface Rolling:        False
-    Surface Unevenness:     False
-    Point Contact:          False
-    Surface Contact:        False
-
-    Other assumptions or restrictions:
-    -
-
-    Args:
-        BaseTableContact (abc): BaseTableContact default
-        class.
-    """
-
-    def __init__(self) -> None:
-        pass
-
-    def forward(self):
-        pass
-
-
-class Liu2013RacketContact(BaseRacketContact):
-    """
-    Source:
-    Liu, Chunfang, Yoshikazu Hayakawa, and Akira Nakashima.
-    "Racket control for a table tennis robot to return a ball."
-    SICE Journal of Control, Measurement, and System
-    Integration 6.4 (2013): 259-266.
-
-    URL:
-    https://www.tandfonline.com/doi/epdf/10.9746/jcmsi.6.259
-
-    Ball Flight Model:      True
-    Racket Rebound Model:   True
-    Spin unit:              1/s or rad/s or None
-
-    Approach:
-    =============================
-    Analytic model:         False
-    System identification:  False
-    ML model:               False
-    Linear model:           False
-    FEM:                    False
-    Spring-Damper-Model:    False
-
-    Effects considered:
-    =============================
-    Spin:                   False
-    Friction:               False
-    Ball elasticity:        False
-    Surface Rolling:        False
-    Surface Unevenness:     False
-    Point Contact:          False
-    Surface Contact:        False
-
-    Other assumptions or restrictions:
-    -
-
-    Args:
-        BaseTableContact (abc): BaseTableContact default
-        class.
-    """
-
-    def __init__(self) -> None:
-        pass
-
-    def forward(self):
-        pass

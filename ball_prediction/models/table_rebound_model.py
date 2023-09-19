@@ -529,11 +529,64 @@ class Zhao2016TableContact(BaseTableContact):
         pass
 
     def forward(self, q: Sequence[float]) -> Sequence[float]:
-        T = np.array(
+        m = 0.0027  # [kg]
+        r = 0.02  # [m]
+
+        I = 2 / 3 * m * r**2  # due to deformation, inertia changes.
+
+        v_x_before = 1
+        v_y_before = 1
+        v_z_before = 1
+
+        v_x_after = 1
+        v_y_after = 1
+        v_z_after = 1
+
+        v_N_before = v_z_before
+        v_N_after = v_z_after
+
+        v_T_before = np.linalg.norm(v_x_before + v_y_before)
+        v_T_after = np.linalg.norm(v_x_after + v_y_after)
+
+        J_N = m * (v_N_after - v_N_before)
+        J_T = m * (v_T_after - v_T_before)
+
+        f_e_N = 1
+
+        f_mu_x = 1
+        f_mu_y = 1
+
+        f_D_x = 1
+        f_D_y = 1
+
+        f_M_N = 1
+
+        contact_matrix = np.array(
             [
-                [1, 0, f_mu_x * 1],
+                [1.0000, 0.0000, f_mu_x * (f_e_N + 1), 0.0000, 0.0015, 0.0000],
+                [0.0000, 1.0000, f_mu_y * (f_e_N + 1), 0.0015, 0.0000, 0.0000],
+                [0.0000, 0.0000, -f_e_N, 0.0000, 0.0000, 0.0000],
+                [
+                    0.0000,
+                    0.0000,
+                    m * f_D_x * f_mu_y * (f_e_N + 1),
+                    1.0000,
+                    0.0000,
+                    0.0000,
+                ],
+                [
+                    0.0000,
+                    0.0000,
+                    m * f_D_x * f_mu_y * (f_e_N + 1),
+                    0.0000,
+                    1.0000,
+                    0.0000,
+                ],
+                [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000],
             ]
         )
+
+        contact_bias = np.array([0.000, 0.000, 0.000, 0.000, 0.000, f_M_N])
 
 
 class Nonomura2010TableContact(BaseTableContact):
@@ -842,5 +895,5 @@ class ResTableContact(BaseTableContact):
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
-    model = Hayakawa2021TableContact()
+    model = Hayakawa2016TableContact()
     model.forward([1, 1, 1, 1, 1, 1])

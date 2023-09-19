@@ -14,7 +14,7 @@ def test_magnus_implementation():
     marker_size = 1.25
 
     file_path = FILE_PATH
-    index = str(INDEX)
+    index = INDEX
 
     collection = load_robot_ball_data(file_path)
 
@@ -26,14 +26,14 @@ def test_magnus_implementation():
     ball_positions = np.array(ball_positions)
     ball_velocities = np.array(ball_velocities)
 
-    start = 10
-    end = 60
+    start = 0
+    end = 90
 
     time_stamps = ball_time_stamps[start:end]
     positions = ball_positions[start:end]
     velocities = ball_velocities[start:end]
 
-    poly_deg = 2
+    poly_deg = 3
 
     physics_config = {
         "ball_mass": 0.027,

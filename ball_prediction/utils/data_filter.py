@@ -119,7 +119,12 @@ def remove_patchy_ball_data(
     gap_counter = 0
 
     for data in collection:
-        time_gaps = np.diff(data["ball_time_stamps"])
+        if len(data) == 0:
+            print(f"Data is empty! {data}")
+            break
+
+        ts = np.array(data["ball_time_stamps"])
+        time_gaps = np.diff(ts)
         largest_gap = max(time_gaps)
 
         if len(time_gaps) == 0:
@@ -152,30 +157,85 @@ def filter_outside_region(
         for axis in range(3):
             if not (limits[axis][0] < positions[idx][axis] < limits[axis][1]):
                 delete_indices.append(idx)
-                break
+                continue
 
-    return delete_indices
+    return remove_samples(data, delete_indices)
+
+
+def filter_last_n_samples(data, n_cutoff):
+    positions = data["ball_positions"]
+
+    removal_indices = np.arange(len(positions) - n_cutoff, len(positions))
+
+    return remove_samples(data, removal_indices)
+
+
+def filter_first_n_samples(data, n_cutoff):
+    removal_indices = np.arange(n_cutoff)
+
+    return remove_samples(data, removal_indices)
 
 
 def remove_samples(item, indices_to_remove):
     filtered_item = item.copy()
 
+    # potentially smarter numpy function available? np.where?
+    remove_time_stamps = []
+    for idx in indices_to_remove:
+        remove_time_stamps.append(filtered_item["ball_time_stamps"][idx])
+
+    # potentially you can use np.argwhere here!
+    time_stamp_indices = []
+    for idx in range(len(filtered_item["time_stamps"])):
+        if filtered_item["time_stamps"][idx] in remove_time_stamps:
+            time_stamp_indices.append(idx)
+
+    # potentially you can use np.argwhere here!
+    robot_indices = []
+    for idx in range(len(filtered_item["robot_time_stamps"])):
+        if filtered_item["robot_time_stamps"][idx] in remove_time_stamps:
+            robot_indices.append(idx)
+
+    original_length_ball_time_stamps = len(filtered_item["ball_time_stamps"])
+    original_length_robot_time_stamps = len(filtered_item["robot_time_stamps"])
+
     for key, values in item.items():
+        if len(indices_to_remove) == 0:
+            continue
+
         if key == "launch_parameter":
             continue
 
         if key == "date_stamp":
             continue
 
-        print(f"Before deletion: key='{key}', values.shape={values.shape}")
-        try:
-            values = np.delete(values, indices_to_remove, axis=0)
-        except IndexError as e:
-            print(f"Error: {e}")
-            print(indices_to_remove)
+        if key == "time_stamps":
+            values = np.delete(values, time_stamp_indices, axis=0)
 
-        print(f"After deletion: key='{key}', values.shape={values.shape}")
-        print("#################################")
+        # Ball samples
+        if len(values) == original_length_ball_time_stamps:
+            values = np.delete(values, indices_to_remove, axis=0)
+
+        # Robot samples
+        if len(values) == original_length_robot_time_stamps:
+            values = np.delete(values, robot_indices, axis=0)
+            
         filtered_item[key] = values
 
     return filtered_item
+
+
+def filter_zero_padded(collection: list):
+    for data in collection:
+        ball_time_stamps = data["ball_time_stamps"]
+        ball_positions = data["ball_positions"]
+        
+        tolerance = 0.01
+        
+        close_to_zero_indices = np.abs(ball_time_stamps) < tolerance
+        indices_to_remove = np.where(close_to_zero_indices)[0]
+        
+        print(indices_to_remove)
+        
+        raise
+                

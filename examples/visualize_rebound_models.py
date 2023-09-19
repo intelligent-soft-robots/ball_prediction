@@ -23,7 +23,7 @@ collection_robot = load_robot_ball_data(file_path_robot)
 
 collection = collection_robot
 
-index = str(10)
+index = 14
 start = 10
 end = 50
 
@@ -67,7 +67,7 @@ for key, item in contact_dict.items():
 TRM_models = []
 
 TRM_models.append(SimpleTableContact)
-TRM_models.append(Hayakawa2021TableContact)
+TRM_models.append(Hayakawa2016TableContact)
 TRM_models.append(Zhang2014TableContact)
 TRM_models.append(Nakashima2010TableContact)
 TRM_models.append(Huang2011TableContact)
