@@ -14,16 +14,19 @@ from ball_prediction.models.magnus_regressor import (
 from ball_prediction.models.rebound_detection import detect_rebounds, filter_rebounds
 from ball_prediction.models.spin_estimator import ContactType
 from ball_prediction.utils.data_filter import (
-    filter_first_n_samples,
-    filter_last_n_samples,
     filter_outside_region,
-    filter_time_span,
-    remove_empty_data,
     remove_patchy_ball_data,
-    remove_samples,
     remove_sparse_data,
+    filter_zero_padded,
+    filter_start_samples,
+    filter_end_samples,
+    filter_collection_time_span
+    
 )
-from ball_prediction.utils.data_management import load_robot_ball_data, load_data_tobuschat
+from ball_prediction.utils.data_management import (
+    load_robot_ball_data,
+    load_data_tobuschat,
+)
 
 FILE_PATH = "/home/lis/workspace/spin_project/workspace/src/ball_prediction/data/no_spin_robot.hdf5"
 
@@ -46,11 +49,7 @@ def filter_dataset():
     min_time_step = 3.0
     max_time_step = 4.5
 
-    new_collection = []
-    for data in _collection:
-        data = filter_time_span(data, min_time_step, max_time_step)
-        new_collection.append(data)
-    _collection = new_collection
+    _collection = filter_collection_time_span(_collection, min_time_step, max_time_step)
     print(f"Time span filtered data: {len(_collection)}")
 
     # Region Filter
@@ -72,19 +71,11 @@ def filter_dataset():
     _collection = remove_sparse_data(_collection)
 
     # Filter last samples as they are often noisy
-    new_collection = []
-    for data in _collection:
-        data = filter_last_n_samples(data, 70)
-        new_collection.append(data)
-    _collection = new_collection
+    _collection = filter_end_samples(_collection, 70)
     print(f"Last filtered data: {len(_collection)}")
 
     # Filter first samples as they are often noisy
-    new_collection = []
-    for data in _collection:
-        # data = filter_first_n_samples(data, 30)
-        new_collection.append(data)
-    _collection = new_collection
+    _collection = filter_start_samples(_collection, 30)
     print(f"Last filtered data: {len(_collection)}")
 
     print(f"Filtered collection: {len(_collection)}")
@@ -183,18 +174,42 @@ def export_dataset():
 
 
 def generate_dataset_tobuschat():
-    file_path = "/home/lis/Desktop/TTData/recording_philipp_tobuschat/processed_data/Data/"
-    n_files = 13000
+    file_path = (
+        "/home/lis/Desktop/TTData/recording_philipp_tobuschat/processed_data/Data/"
+    )
+    n_files = 1300
     
     collection = load_data_tobuschat(file_path, n_files)
+    print(f"Original data: {len(collection)}")
     
+    for i in [12, 45, 65, 74]:
+        print(f"{collection[0]['ball_time_stamps'][i]} versus {collection[0]['robot_time_stamps'][i]}")
+
+    
+    collection = filter_zero_padded(collection=collection)
+    print(f"Zero padded: {len(collection)}")
+    
+    collection = remove_sparse_data(collection, min_num_samples=150)
+    print(f"Sparse filtered: {len(collection)}")
+    
+    collection = filter_end_samples(collection, 30)
+    print(f"Last filtered data: {len(collection)}")
+    
+    collection = remove_patchy_ball_data(collection, 0.08)
+    print(f"Patchy removed: {len(collection)}")
+    
+    # Time Span Filter
+    min_time_step = 0.0
+    max_time_step = 2.0
+
+    collection = filter_collection_time_span(collection, min_time_step, max_time_step)
+    print(f"Time span filtered data: {len(collection)}")
+    
+    
+
     # export_path = "/home/lis/Desktop/TTData/recording_philipp_tobuschat/contact_tobuschat.hdf5"
     # to_hdf5(export_path, collection)
-    
-    # data = collection[900]
-    # import matplotlib.pyplot as plt
-    # ax = plt.figure().add_subplot(projection='3d')
-    # positions = np.array(data["ball_positions"])
+
     return collection
 
 
@@ -278,10 +293,9 @@ def count_rebounds(collection):
 
 
 if __name__ == "__main__":
-    #filtered_collection = filter_dataset()
+    # filtered_collection = filter_dataset()
     # count_rebounds(filtered_collection)
     filtered_collection = generate_dataset_tobuschat()
-    
 
     # Visualize
     plot_ball_data(filtered_collection)

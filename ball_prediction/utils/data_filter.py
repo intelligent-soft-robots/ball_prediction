@@ -37,12 +37,14 @@ def filter_time_span(data: dict, min_t: float, max_t: float) -> List[Dict[str, A
     indices.extend(remove_indices)
 
     for key in ball_keys:
-        val = new_data[key]
-        filtered_val = np.delete(val, indices, axis=0)
-        new_data[key] = filtered_val
+        if key in new_data.keys():
+            val = new_data[key]
+            filtered_val = np.delete(val, indices, axis=0)
+            new_data[key] = filtered_val
+
 
     # filter robot data
-    robot_time_stamps = data["robot_time_stamps"]
+    robot_time_stamps = new_data["robot_time_stamps"]
 
     indices = []
 
@@ -53,12 +55,21 @@ def filter_time_span(data: dict, min_t: float, max_t: float) -> List[Dict[str, A
     indices.extend(remove_indices)
 
     for key in robot_keys:
-        val = new_data[key]
-        filtered_val = np.delete(val, indices, axis=0)
-        new_data[key] = filtered_val
+        if key in new_data.keys():
+            val = new_data[key]
+            filtered_val = np.delete(val, indices, axis=0)
+            new_data[key] = filtered_val
 
     return new_data
 
+
+def filter_collection_time_span(collection: list, min_t: float, max_t: float):
+    filtered_collection = []
+    for data in collection:
+        filtered_data = filter_time_span(data, min_t=min_t, max_t=max_t)
+        filtered_collection.append(filtered_data)
+        
+    return filtered_collection
 
 def remove_empty_data(collection: list):
     new_collection = []
@@ -162,6 +173,26 @@ def filter_outside_region(
     return remove_samples(data, delete_indices)
 
 
+def filter_inside_region(
+    data,
+    xlimit: Tuple[float],
+    ylimit: Tuple[float],
+    zlimit: Tuple[float],
+):
+    limits = [xlimit, ylimit, zlimit]
+
+    positions = data["ball_positions"]
+    delete_indices = []
+
+    for idx in range(len(positions)):
+        for axis in range(3):
+            if (limits[axis][0] < positions[idx][axis] < limits[axis][1]):
+                delete_indices.append(idx)
+                continue
+
+    return remove_samples(data, delete_indices)
+
+
 def filter_last_n_samples(data, n_cutoff):
     positions = data["ball_positions"]
 
@@ -176,6 +207,24 @@ def filter_first_n_samples(data, n_cutoff):
     return remove_samples(data, removal_indices)
 
 
+def filter_end_samples(collection: list, n_cutoff: int):
+    new_collection = []
+    for data in collection:
+        data = filter_last_n_samples(data, n_cutoff)
+        new_collection.append(data)
+        
+    return new_collection
+
+
+def filter_start_samples(collection: list, n_cutoff: int):
+    new_collection = []
+    for data in collection:
+        data = filter_first_n_samples(data, n_cutoff)
+        new_collection.append(data)
+        
+    return new_collection
+
+
 def remove_samples(item, indices_to_remove):
     filtered_item = item.copy()
 
@@ -185,10 +234,11 @@ def remove_samples(item, indices_to_remove):
         remove_time_stamps.append(filtered_item["ball_time_stamps"][idx])
 
     # potentially you can use np.argwhere here!
-    time_stamp_indices = []
-    for idx in range(len(filtered_item["time_stamps"])):
-        if filtered_item["time_stamps"][idx] in remove_time_stamps:
-            time_stamp_indices.append(idx)
+    if "time_stamps" in filtered_item.keys():
+        time_stamp_indices = []
+        for idx in range(len(filtered_item["time_stamps"])):
+            if filtered_item["time_stamps"][idx] in remove_time_stamps:
+                time_stamp_indices.append(idx)
 
     # potentially you can use np.argwhere here!
     robot_indices = []
@@ -219,23 +269,23 @@ def remove_samples(item, indices_to_remove):
         # Robot samples
         if len(values) == original_length_robot_time_stamps:
             values = np.delete(values, robot_indices, axis=0)
-            
+
         filtered_item[key] = values
 
     return filtered_item
 
 
-def filter_zero_padded(collection: list):
+def filter_zero_padded(collection: list, tolerance=0.01):
+    filtered_collection = []
+    
     for data in collection:
-        ball_time_stamps = data["ball_time_stamps"]
-        ball_positions = data["ball_positions"]
+        filtered_data = filter_inside_region(
+            data,
+            [-tolerance, tolerance],
+            [-tolerance, tolerance],
+            [-tolerance, tolerance],
+        )
         
-        tolerance = 0.01
+        filtered_collection.append(filtered_data)
         
-        close_to_zero_indices = np.abs(ball_time_stamps) < tolerance
-        indices_to_remove = np.where(close_to_zero_indices)[0]
-        
-        print(indices_to_remove)
-        
-        raise
-                
+    return filtered_collection
